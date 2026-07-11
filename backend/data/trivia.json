@@ -50,6 +50,36 @@
           "Brazil"
         ],
         "correctIndex": 1
+      },
+      {
+        "id": "q_01",
+        "question": "Who won the 2022 World Cup?",
+        "options": [
+          "France",
+          "Argentina",
+          "Brazil"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": "q_01",
+        "question": "Who won the 2022 World Cup?",
+        "options": [
+          "France",
+          "Argentina",
+          "Brazil"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": "q_01",
+        "question": "Who won the 2022 World Cup?",
+        "options": [
+          "France",
+          "Argentina",
+          "Brazil"
+        ],
+        "correctIndex": 1
       }
     ],
     "leaderboard": [
@@ -64,6 +94,10 @@
       {
         "username": "Aussie_Roos",
         "points": 40
+      },
+      {
+        "username": "Fan_2561",
+        "points": 10
       }
     ]
   },

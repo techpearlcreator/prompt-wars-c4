@@ -1,0 +1,55 @@
+{
+  "fifa_2026_001": {
+    "streams": [
+      {
+        "id": "stream_001_eng",
+        "name": "Global English Radio",
+        "language": "English",
+        "commentator": "Peter Drury",
+        "listeners": 1241,
+        "status": "live",
+        "transcripts": [
+          "67' - Lionel Messi picks up the ball in midfield, glides past one defender, past a second... what magic!",
+          "68' - Messi spots Alvarez making a run... he releases it... Alvarez fires! OH! What a magnificent fingertip save by Ryan!",
+          "69' - Argentina corner. Messi swings it in, Otamendi rises... headed just over the crossbar!",
+          "70' - Australia tries to play it out from the back, but Mac Allister intercepts immediately.",
+          "71' - Duke holds up the play for Australia, wins a crucial free-kick near the center circle."
+        ]
+      },
+      {
+        "id": "stream_001_spa",
+        "name": "Radio Argentina AM 590",
+        "language": "Spanish",
+        "commentator": "Mariano Closs",
+        "listeners": 3560,
+        "status": "live",
+        "transcripts": [
+          "67' - ¡Arranca Messi, va con la pelota dominada, engancha hacia adentro, extraordinario Messi!",
+          "68' - Filtra el pase para Álvarez... remata... ¡TAPÓ EL ARQUERO! Tapó Ryan, espectacular el arquero australiano.",
+          "69' - Tiro de esquina para la albiceleste. Centro de Messi, cabezazo de Otamendi... ¡cerca, apenas desviado!",
+          "70' - Presiona Argentina arriba, recupera rápido Mac Allister en tres cuartos de cancha.",
+          "71' - Falta sobre Duke. Respira la defensa de Australia que la estaba pasando muy mal."
+        ]
+      }
+    ]
+  },
+  "fifa_2026_002": {
+    "streams": [
+      {
+        "id": "stream_002_fra",
+        "name": "Radio France Foot",
+        "language": "French",
+        "commentator": "Gregoire Margotton",
+        "listeners": 480,
+        "status": "live",
+        "transcripts": [
+          "40' - Griezmann décale pour Mbappé sur le côté gauche... Mbappé accélère, il efface Hakimi !",
+          "41' - Centre en retrait de Mbappé... Giroud reprend de volée ! Quelle parade fantastique de Bounou !",
+          "42' - Corner pour les Bleus. Griezmann s'en charge, c'est repoussé de la tête par Saiss.",
+          "43' - Contre-attaque rapide pour le Maroc menée par Ziyech. Tchouaméni fait faute.",
+          "44' - Coup franc dangereux pour le Maroc excentré à droite. Le mur se met en place."
+        ]
+      }
+    ]
+  }
+}

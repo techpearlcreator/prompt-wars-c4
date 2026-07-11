@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import ChatWindow from '../components/ChatWindow';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import translations from '../i18n';
-import { fetchConcessionsQueue, fetchTransitMetrics, fetchTriviaLeaderboard } from '../services/api';
+import { fetchConcessionsQueue, fetchTransitMetrics, fetchTriviaLeaderboard, fetchCommentaryStreams, toggleCommentaryListen } from '../services/api';
 import { Trophy, MapPin, Users, Flame, Info, BarChart2, Globe, Calendar, BellRing, Clock, Heart, Edit2, Check } from 'lucide-react';
 import { io } from 'socket.io-client';
 
@@ -32,6 +32,12 @@ export default function App() {
   const [fanHandle, setFanHandle] = useState('GuestFan');
   const [isEditingHandle, setIsEditingHandle] = useState(false);
   const [handleInput, setHandleInput] = useState('GuestFan');
+
+  // Commentary Audio Hub State (Phase 16)
+  const [streams, setStreams] = useState([]);
+  const [activeStreamId, setActiveStreamId] = useState(null);
+  const [liveTranscripts, setLiveTranscripts] = useState([]);
+  const [transcriptIndex, setTranscriptIndex] = useState(0);
 
   const socketRef = useRef(null);
   const t = translations[language] || translations['English'];
@@ -148,7 +154,78 @@ export default function App() {
     }
   };
 
-  // 6. Emit cheer
+  // 6. Fetch Localized Commentary Streams
+  useEffect(() => {
+    const loadStreams = async () => {
+      try {
+        const data = await fetchCommentaryStreams(matchId);
+        setStreams(data.streams || []);
+        setActiveStreamId(null);
+        setLiveTranscripts([]);
+      } catch (err) {
+        console.warn("Failed to load commentary streams.");
+      }
+    };
+    loadStreams();
+  }, [matchId]);
+
+  const toggleListen = async (stream) => {
+    const isTunedIn = activeStreamId === stream.id;
+    const action = isTunedIn ? 'leave' : 'join';
+
+    try {
+      if (activeStreamId && activeStreamId !== stream.id) {
+        await toggleCommentaryListen({ matchId, streamId: activeStreamId, action: 'leave' });
+      }
+
+      const res = await toggleCommentaryListen({ matchId, streamId: stream.id, action });
+      if (res.success) {
+        setStreams(prev => prev.map(s => {
+          if (s.id === stream.id) return { ...s, listeners: res.listeners };
+          if (s.id === activeStreamId) return { ...s, listeners: Math.max(0, s.listeners - 1) };
+          return s;
+        }));
+
+        if (isTunedIn) {
+          setActiveStreamId(null);
+          setLiveTranscripts([]);
+        } else {
+          setActiveStreamId(stream.id);
+          setLiveTranscripts([stream.transcripts[0] || "Tuned in successfully. Waiting for commentary..."]);
+          setTranscriptIndex(1);
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to toggle commentary listen status.");
+    }
+  };
+
+  // 7. Auto-scrolling commentary transcript ticker (every 5 seconds)
+  useEffect(() => {
+    if (!activeStreamId) return;
+
+    const activeStream = streams.find(s => s.id === activeStreamId);
+    if (!activeStream || !activeStream.transcripts) return;
+
+    const interval = setInterval(() => {
+      setTranscriptIndex(prevIdx => {
+        const nextIdx = prevIdx % activeStream.transcripts.length;
+        const line = activeStream.transcripts[nextIdx];
+        
+        setLiveTranscripts(prevLines => {
+          const updated = [...prevLines, line];
+          if (updated.length > 3) updated.shift();
+          return updated;
+        });
+
+        return nextIdx + 1;
+      });
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [activeStreamId, streams]);
+
+  // 8. Emit cheer
   const submitCheer = (team) => {
     if (socketRef.current) {
       socketRef.current.emit('submit_cheer', { matchId, team });
@@ -408,6 +485,68 @@ export default function App() {
                     </div>
                   );
                 })
+              )}
+            </div>
+          </div>
+
+          {/* Live Audio commentary (Phase 16 Widget) */}
+          <div className="space-y-2.5 shrink-0">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center">
+              <span className="mr-1.5">🎙️</span> Live Commentary Board
+            </h3>
+            
+            <div className="bg-stadium-navy-deep/45 border border-stadium-navy-light/40 rounded-2xl p-3.5 space-y-3.5 shadow-md">
+              <div className="space-y-2.5">
+                {streams.map((stream) => {
+                  const isListening = activeStreamId === stream.id;
+                  
+                  return (
+                    <div key={stream.id} className="flex justify-between items-center text-xs">
+                      <div>
+                        <div className="flex items-center space-x-1.5">
+                          <span className="font-bold text-slate-200">{stream.name}</span>
+                          <span className="text-[10px] text-slate-400 bg-stadium-navy-light px-1.5 py-0.5 rounded font-semibold uppercase">{stream.language}</span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 block">{stream.commentator} ({stream.listeners.toLocaleString()} listening)</span>
+                      </div>
+
+                      <button
+                        onClick={() => toggleListen(stream)}
+                        className={`px-3 py-1 rounded-xl text-[10px] font-black transition-all ${
+                          isListening
+                            ? 'bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse font-bold'
+                            : 'bg-stadium-gold/15 text-stadium-gold border border-stadium-gold/30 hover:bg-stadium-gold/25 font-bold'
+                        } cursor-pointer`}
+                      >
+                        {isListening ? '📻 TUNE OUT' : '📻 TUNE IN'}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Scrolling transcript marquee */}
+              {activeStreamId && liveTranscripts.length > 0 && (
+                <div className="border-t border-stadium-navy-light/30 pt-3 space-y-1.5">
+                  <div className="flex items-center space-x-1.5 text-[9px] font-bold text-stadium-gold uppercase tracking-wider animate-pulse select-none">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0"></span>
+                    <span>LIVE Commentary Feed</span>
+                  </div>
+                  <div className="bg-stadium-navy-deep/60 border border-stadium-navy-light/25 rounded-xl p-2.5 min-h-[70px] flex flex-col justify-end space-y-1 font-mono text-[10px]">
+                    {liveTranscripts.map((line, idx) => (
+                      <p 
+                        key={idx} 
+                        className={`transition-all duration-500 ${
+                          idx === liveTranscripts.length - 1 
+                            ? 'text-slate-100 font-semibold' 
+                            : 'text-slate-400 opacity-60'
+                        }`}
+                      >
+                        {line}
+                      </p>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           </div>

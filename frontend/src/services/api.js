@@ -246,3 +246,35 @@ export async function fetchTriviaLeaderboard(matchId) {
     throw error;
   }
 }
+
+/**
+ * Fetch commentary streams for a match.
+ */
+export async function fetchCommentaryStreams(matchId) {
+  try {
+    const response = await fetch(`/api/commentary/${matchId}`);
+    if (!response.ok) throw new Error("Failed to fetch commentary streams.");
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch Commentary Error:", error.message);
+    throw error;
+  }
+}
+
+/**
+ * Join or leave a commentary audio stream.
+ */
+export async function toggleCommentaryListen(payload) {
+  try {
+    const response = await fetch('/api/commentary/listen', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) throw new Error("Failed to toggle commentary listen.");
+    return await response.json();
+  } catch (error) {
+    console.error("Toggle Commentary Listen Error:", error.message);
+    throw error;
+  }
+}
