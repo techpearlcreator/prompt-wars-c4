@@ -189,6 +189,27 @@ function generateMockResponse(query, matchId, language, sentiment) {
     }
   }
 
+  // Seating Seating Seating Seating Seating Seating Seating Map / Wayfinding (Phase 17)
+  const isMapQuery = q.includes('map') || q.includes('wayfinding') || q.includes('where is') || q.includes('find') || q.includes('locate') || q.includes('restroom') || q.includes('elevator') || q.includes('toilet') || q.includes('gate') || q.includes('bathroom') || q.includes('direction');
+  if (isMapQuery) {
+    const sectionMatch = q.match(/(?:sec|section)\s*(\d+)/i);
+    const section = sectionMatch ? sectionMatch[1] : "112";
+
+    let target = "restroom";
+    if (q.includes('pizza') || q.includes('food')) {
+      target = "pizza";
+    } else if (q.includes('elevator') || q.includes('lift')) {
+      target = "elevator";
+    } else if (q.includes('gate') || q.includes('exit')) {
+      target = "gate_c";
+    }
+
+    const { getMapCoordinates } = require('./mapService');
+    const { start, target: coordTarget } = getMapCoordinates(section, target);
+
+    return `Here is the interactive seating map and wayfinding route from Section ${section} to the nearest ${target}:\n[STADIUM_MAP: ${isArg ? 'MetLife Stadium' : 'SoFi Stadium'}, section: ${section}, target: ${target}, eta: ${coordTarget.eta}, distance: ${coordTarget.distance}]`;
+  }
+
   // Custom Jersey Pre-orders trigger
   const isJerseyQuery = (q.includes('jersey') || q.includes('shirt') || q.includes('kit')) && 
                         (q.includes('order') || q.includes('buy') || q.includes('custom') || q.includes('print') || q.includes('pre-order'));

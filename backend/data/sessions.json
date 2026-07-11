@@ -49,11 +49,23 @@
           "text": "🚨 COMPANION LOCATED: Billy has been found by stadium stewards and is currently safe at the Guest Services Booth (Section 124). Please head there immediately to reunite.",
           "sender": "ai",
           "timestamp": 1783778129755
+        },
+        {
+          "id": "msg_1783786331887_lcaea",
+          "text": "Show me the map for Section 112 restrooms",
+          "sender": "user",
+          "timestamp": 1783786331887
+        },
+        {
+          "id": "msg_1783786331892_2uh67",
+          "text": "Here is the interactive seating map and wayfinding route from Section 112 to the nearest restroom:\n[STADIUM_MAP: MetLife Stadium, section: 112, target: restroom, eta: 1 min, distance: 25m]",
+          "sender": "ai",
+          "timestamp": 1783786331892
         }
       ],
       "createdAt": 1783767473247,
       "matchId": "fifa_2026_001",
-      "lastActivity": 1783778129755
+      "lastActivity": 1783786331892
     },
     "usr_1783767425736_dtx06i1zz": {
       "messages": [

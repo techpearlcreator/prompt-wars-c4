@@ -95,7 +95,147 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
   const renderMessageContent = (text) => {
     if (typeof text !== 'string') return text;
 
-    // 1. Check for Concessions Receipt Match
+    // 1. Check for Stadium Seating Map wayfinding Match
+    const mapRegex = /\[STADIUM_MAP:\s*([^,]+),\s*section:\s*([^,]+),\s*target:\s*([^,]+),\s*eta:\s*([^,]+),\s*distance:\s*([^\]]+)\]/;
+    const mapMatch = text.match(mapRegex);
+
+    if (mapMatch) {
+      const [_, venue, section, target, eta, distance] = mapMatch;
+      
+      const sectionCoordsMap = {
+        "112": { x: 75, y: 70, label: "Section 112" },
+        "104": { x: 25, y: 30, label: "Section 104" },
+        "128": { x: 25, y: 75, label: "Section 128" },
+        "143": { x: 75, y: 25, label: "Section 143" }
+      };
+
+      const targetCoordsMap = {
+        "restroom": { x: 70, y: 72, label: "🚻 Restroom (Sec 112)" },
+        "restroom_104": { x: 28, y: 28, label: "🚻 Restroom (Sec 104)" },
+        "pizza": { x: 80, y: 65, label: "🍕 Pizza Stand (Sec 114)" },
+        "pizza_324": { x: 20, y: 80, label: "🍕 Pizza Stand (Sec 324)" },
+        "elevator": { x: 72, y: 68, label: "🛗 Elevator (Sec 112)" },
+        "gate_c": { x: 78, y: 62, label: "🚧 Gate C Outflow" }
+      };
+
+      const start = sectionCoordsMap[section.trim()] || sectionCoordsMap["112"];
+      
+      let tKey = target.trim().toLowerCase();
+      let targetCoord = targetCoordsMap["restroom"];
+      if (tKey === 'restroom' && section.trim() === '104') {
+        targetCoord = targetCoordsMap["restroom_104"];
+      } else if (tKey === 'restroom') {
+        targetCoord = targetCoordsMap["restroom"];
+      } else if (tKey === 'pizza' && text.includes('324')) {
+        targetCoord = targetCoordsMap["pizza_324"];
+      } else if (tKey === 'pizza') {
+        targetCoord = targetCoordsMap["pizza"];
+      } else if (tKey === 'elevator') {
+        targetCoord = targetCoordsMap["elevator"];
+      } else {
+        targetCoord = targetCoordsMap["gate_c"];
+      }
+
+      return (
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 my-2.5 shadow-xl space-y-3.5 max-w-sm select-none text-slate-100 font-sans">
+          <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+            <div className="flex items-center space-x-1.5 text-stadium-gold font-bold uppercase tracking-wider text-xs">
+              <MapPin className="w-4 h-4 text-stadium-gold" />
+              <span>Wayfinding Seat Map</span>
+            </div>
+            <span className="text-[10px] text-slate-400 font-semibold truncate max-w-[130px]">{venue}</span>
+          </div>
+
+          {/* 2D Stadium Map Diagram */}
+          <div className="relative w-full h-[180px] bg-slate-950/70 rounded-xl border border-slate-800/80 overflow-hidden">
+            {/* Grid background lines */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:20px_20px] opacity-15"></div>
+
+            {/* Seating Ring Oval */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[220px] h-[120px] rounded-full border-[3px] border-slate-700/50 bg-slate-900/40 flex items-center justify-center">
+              {/* Inner pitch field grass */}
+              <div className="w-[120px] h-[55px] rounded-full border border-emerald-500/20 bg-emerald-600/10 flex items-center justify-center relative">
+                <div className="absolute inset-y-0 left-1/2 w-[1px] bg-emerald-500/10"></div>
+                <div className="w-8 h-8 rounded-full border border-emerald-500/10 absolute"></div>
+              </div>
+            </div>
+
+            {/* Quadrant Section Labels */}
+            <div className="absolute text-[8px] font-bold text-slate-600 top-6 left-12">SEC 104</div>
+            <div className="absolute text-[8px] font-bold text-slate-600 top-6 right-12">SEC 143</div>
+            <div className="absolute text-[8px] font-bold text-slate-600 bottom-6 left-12">SEC 128</div>
+            <div className="absolute text-[8px] font-bold text-slate-600 bottom-6 right-12">SEC 112</div>
+
+            {/* SVG Path Route with animated dash */}
+            <svg className="absolute inset-0 w-full h-full pointer-events-none">
+              <defs>
+                <style>{`
+                  @keyframes dash {
+                    to {
+                      stroke-dashoffset: -20;
+                    }
+                  }
+                  .route-line {
+                    stroke: #fbbf24;
+                    stroke-width: 2.5;
+                    stroke-dasharray: 6,4;
+                    animation: dash 1s linear infinite;
+                  }
+                `}</style>
+              </defs>
+              <line 
+                x1={`${start.x}%`} 
+                y1={`${start.y}%`} 
+                x2={`${targetCoord.x}%`} 
+                y2={`${targetCoord.y}%`} 
+                className="route-line" 
+              />
+            </svg>
+
+            {/* Blinking Seat Marker Radar Beacon */}
+            <div 
+              style={{ left: `${start.x}%`, top: `${start.y}%` }} 
+              className="absolute -translate-x-1/2 -translate-y-1/2 z-10"
+            >
+              <div className="relative flex h-3.5 w-3.5 items-center justify-center">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500 border border-white"></span>
+              </div>
+              <span className="absolute left-4 -top-1 px-1 bg-amber-500/90 text-slate-950 text-[8px] font-black rounded uppercase select-none pointer-events-none">
+                SEAT
+              </span>
+            </div>
+
+            {/* Destination Target Marker */}
+            <div 
+              style={{ left: `${targetCoord.x}%`, top: `${targetCoord.y}%` }} 
+              className="absolute -translate-x-1/2 -translate-y-1/2 z-10"
+            >
+              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500 text-slate-950 font-semibold border-2 border-slate-900 shadow-md">
+                <span className="text-[10px]">{targetCoord.label.split(' ')[0]}</span>
+              </div>
+              <span className="absolute left-6 -top-1 px-1.5 py-0.5 bg-emerald-500/90 text-slate-950 text-[7px] font-black rounded uppercase tracking-wider whitespace-nowrap select-none pointer-events-none">
+                GOAL
+              </span>
+            </div>
+          </div>
+
+          {/* Route info legend footer */}
+          <div className="flex justify-between items-center text-[10px] font-mono bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/60 leading-tight">
+            <div>
+              <span className="text-slate-400 block uppercase text-[8px] tracking-wide font-black">Target Location</span>
+              <span className="font-bold text-slate-200">{targetCoord.label}</span>
+            </div>
+            <div className="text-right border-l border-slate-800 pl-3">
+              <span className="font-bold text-emerald-400 block">{distance} away</span>
+              <span className="text-slate-400 text-[9px] block">~{eta} walk</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // 2. Check for Concessions Receipt Match
     const receiptRegex = /\[RECEIPT:\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^\]]+)\]/;
     const receiptMatch = text.match(receiptRegex);
     
