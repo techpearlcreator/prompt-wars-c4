@@ -1,0 +1,53 @@
+{
+  "fifa_2026_001": {
+    "questions": [
+      {
+        "id": "q_001",
+        "question": "Which player scored the fastest goal in World Cup history?",
+        "options": [
+          "Hakan Sukur (Turkey)",
+          "Bernard Lacombe (France)",
+          "Clint Dempsey (USA)"
+        ],
+        "correctIndex": 0
+      },
+      {
+        "id": "q_01",
+        "question": "Who won the 2022 World Cup?",
+        "options": [
+          "France",
+          "Argentina",
+          "Brazil"
+        ],
+        "correctIndex": 1
+      }
+    ],
+    "leaderboard": [
+      {
+        "username": "Fan_Messi10",
+        "points": 90
+      },
+      {
+        "username": "Maroc_Hero",
+        "points": 60
+      },
+      {
+        "username": "Aussie_Roos",
+        "points": 40
+      }
+    ]
+  },
+  "fifa_2026_002": {
+    "questions": [],
+    "leaderboard": [
+      {
+        "username": "Paris_Pride",
+        "points": 95
+      },
+      {
+        "username": "Atlas_Star",
+        "points": 70
+      }
+    ]
+  }
+}

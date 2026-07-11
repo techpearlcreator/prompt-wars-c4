@@ -214,3 +214,35 @@ export async function fetchTransitMetrics(matchId) {
     throw error;
   }
 }
+
+/**
+ * Submit fan answer to a trivia question.
+ */
+export async function submitTriviaAnswer(payload) {
+  try {
+    const response = await fetch('/api/trivia/answer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) throw new Error("Failed to submit trivia answer.");
+    return await response.json();
+  } catch (error) {
+    console.error("Submit Trivia Error:", error.message);
+    throw error;
+  }
+}
+
+/**
+ * Fetch live trivia leaderboard stats.
+ */
+export async function fetchTriviaLeaderboard(matchId) {
+  try {
+    const response = await fetch(`/api/trivia/leaderboard/${matchId}`);
+    if (!response.ok) throw new Error("Failed to fetch trivia leaderboard.");
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch Leaderboard Error:", error.message);
+    throw error;
+  }
+}

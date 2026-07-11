@@ -140,11 +140,35 @@
           "text": "[MERCH_VOUCHER: mch_69802, Argentina, MESSI, 10, L, $120, Apparel Locker Sec 108]",
           "sender": "ai",
           "timestamp": 1783780741135
+        },
+        {
+          "id": "msg_1783782116697_omr7c",
+          "text": "how should i go home",
+          "sender": "user",
+          "timestamp": 1783782116697
+        },
+        {
+          "id": "msg_1783782116711_p9tn1",
+          "text": "We are watching Argentina vs. Australia live. Argentina leads 2-1 in the 67th minute. Ask me about Messi's goal or lineups!",
+          "sender": "ai",
+          "timestamp": 1783782116711
+        },
+        {
+          "id": "msg_1783782138285_xtgm6",
+          "text": "How should I get home? Should I take an Uber or Lyft?",
+          "sender": "user",
+          "timestamp": 1783782138285
+        },
+        {
+          "id": "msg_1783782138294_t5i3l",
+          "text": "🚗 MetLife Stadium Transit & Rideshare Options:\n- Lyft: $38.00 (1.6x surge multiplier) | 15 min wait time | Lot D (Zone B).\n- Uber: $45.00 (1.8x surge multiplier) | 18 min wait time | Lot E (Zone A).\n- NJ Transit Train (Meadowlands Station): Trains depart every 10 minutes, currently ON TIME. Cost: $10.50.\n- Shuttles: 8 min wait.\n💡 Recommendation: Lyft is currently $7 cheaper than Uber with a shorter line. For a completely surge-free option, the NJ Transit train is highly recommended.",
+          "sender": "ai",
+          "timestamp": 1783782138294
         }
       ],
       "createdAt": 1783767644654,
       "matchId": "fifa_2026_001",
-      "lastActivity": 1783780741135
+      "lastActivity": 1783782138294
     }
   },
   "feedback": {

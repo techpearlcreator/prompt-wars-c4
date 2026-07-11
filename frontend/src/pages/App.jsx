@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import ChatWindow from '../components/ChatWindow';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import translations from '../i18n';
-import { fetchConcessionsQueue, fetchTransitMetrics } from '../services/api';
-import { Trophy, MapPin, Users, Flame, Info, BarChart2, Globe, Calendar, BellRing, Clock, Heart } from 'lucide-react';
+import { fetchConcessionsQueue, fetchTransitMetrics, fetchTriviaLeaderboard } from '../services/api';
+import { Trophy, MapPin, Users, Flame, Info, BarChart2, Globe, Calendar, BellRing, Clock, Heart, Edit2, Check } from 'lucide-react';
 import { io } from 'socket.io-client';
 
 export default function App() {
@@ -26,6 +26,12 @@ export default function App() {
 
   // Transit Surge state
   const [transit, setTransit] = useState(null);
+
+  // Trivia & Fan Profile State (Phase 15)
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [fanHandle, setFanHandle] = useState('GuestFan');
+  const [isEditingHandle, setIsEditingHandle] = useState(false);
+  const [handleInput, setHandleInput] = useState('GuestFan');
 
   const socketRef = useRef(null);
   const t = translations[language] || translations['English'];
@@ -99,7 +105,50 @@ export default function App() {
     loadTransit();
   }, [matchId]);
 
-  // 4. Emit cheer
+  // 4. Load Fan Profile Handle on mount
+  useEffect(() => {
+    let handle = localStorage.getItem('fifa_fan_handle');
+    if (!handle) {
+      handle = `Fan_${Math.floor(Math.random() * 9000) + 1000}`;
+      localStorage.setItem('fifa_fan_handle', handle);
+    }
+    setFanHandle(handle);
+    setHandleInput(handle);
+  }, []);
+
+  // 5. Fetch Trivia Leaderboard scores
+  const loadLeaderboard = async () => {
+    try {
+      const data = await fetchTriviaLeaderboard(matchId);
+      setLeaderboard(data.leaderboard || []);
+    } catch (err) {
+      console.warn("Failed to load trivia leaderboard.");
+    }
+  };
+
+  useEffect(() => {
+    loadLeaderboard();
+    
+    const handleScoreUpdate = () => {
+      loadLeaderboard();
+    };
+    window.addEventListener('trivia_score_updated', handleScoreUpdate);
+    return () => {
+      window.removeEventListener('trivia_score_updated', handleScoreUpdate);
+    };
+  }, [matchId]);
+
+  const saveFanHandle = () => {
+    const clean = handleInput.trim();
+    if (clean) {
+      localStorage.setItem('fifa_fan_handle', clean);
+      setFanHandle(clean);
+      setIsEditingHandle(false);
+      loadLeaderboard();
+    }
+  };
+
+  // 6. Emit cheer
   const submitCheer = (team) => {
     if (socketRef.current) {
       socketRef.current.emit('submit_cheer', { matchId, team });
@@ -291,6 +340,75 @@ export default function App() {
                   <span>Cheer {isArgMatch ? 'AUS' : 'MAR'}</span>
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* Fan Profile & Trivia Leaderboard (Phase 15 Widget) */}
+          <div className="space-y-2.5 shrink-0">
+            <div className="flex justify-between items-center">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center">
+                <Trophy className="w-3.5 h-3.5 text-stadium-gold mr-1.5" /> Fan Championship
+              </h3>
+              
+              {/* Profile Editor */}
+              <div className="flex items-center text-[10px] text-slate-400 bg-stadium-navy-deep px-2 py-0.5 rounded-full border border-stadium-navy-light/45">
+                {isEditingHandle ? (
+                  <div className="flex items-center space-x-1">
+                    <input 
+                      type="text" 
+                      value={handleInput}
+                      maxLength={14}
+                      onChange={(e) => setHandleInput(e.target.value)}
+                      className="w-16 bg-transparent text-slate-100 outline-none border-b border-stadium-gold text-[10px] font-mono px-0.5"
+                    />
+                    <button onClick={saveFanHandle} className="hover:text-green-400 cursor-pointer">
+                      <Check className="w-2.5 h-2.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-1 font-mono">
+                    <span className="text-stadium-gold truncate max-w-[65px]">{fanHandle}</span>
+                    <button onClick={() => setIsEditingHandle(true)} className="hover:text-stadium-gold cursor-pointer">
+                      <Edit2 className="w-2.5 h-2.5 opacity-65" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="bg-stadium-navy-deep/45 border border-stadium-navy-light/40 rounded-2xl p-3 shadow-md space-y-2 max-h-[140px] overflow-y-auto custom-scrollbar">
+              {leaderboard.length === 0 ? (
+                <p className="text-xs text-slate-400 text-center py-2">Join trivia to score points!</p>
+              ) : (
+                leaderboard.slice(0, 5).map((player, idx) => {
+                  const isUser = player.username.toLowerCase() === fanHandle.toLowerCase();
+                  
+                  let badge = "";
+                  if (idx === 0) badge = "🥇";
+                  else if (idx === 1) badge = "🥈";
+                  else if (idx === 2) badge = "🥉";
+                  else badge = `#${idx + 1}`;
+
+                  return (
+                    <div 
+                      key={idx} 
+                      className={`flex justify-between items-center text-xs px-2.5 py-1.5 rounded-xl transition-all ${
+                        isUser 
+                          ? 'bg-stadium-gold/15 border border-stadium-gold text-slate-100 font-bold' 
+                          : 'text-slate-300'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2 truncate">
+                        <span className="font-bold text-[10px]">{badge}</span>
+                        <span className="truncate max-w-[100px] font-mono">{player.username}</span>
+                      </div>
+                      <span className={`font-bold ${isUser ? 'text-stadium-gold-light' : 'text-slate-400'}`}>
+                        {player.points} pts
+                      </span>
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
 

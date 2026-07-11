@@ -1,16 +1,17 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Sparkles, User, ThumbsUp, ThumbsDown, Receipt, ShoppingBag } from 'lucide-react';
+import { Sparkles, User, ThumbsUp, ThumbsDown, Receipt, ShoppingBag, Trophy, Check, X as CloseIcon } from 'lucide-react';
 import TypingIndicator from './TypingIndicator';
-import { sendMessageFeedback } from '../services/api';
+import { sendMessageFeedback, submitTriviaAnswer } from '../services/api';
 
 /**
  * MessageList Component
- * Displays the scrollable message thread with interactive poll cards, receipt invoices, custom jerseys, and RAG wayfinding decorators.
+ * Displays the scrollable message thread with interactive poll cards, live trivia cards, receipt invoices, custom jerseys, and RAG wayfinding decorators.
  */
-export default function MessageList({ messages, isTyping, ratingThanksText }) {
+export default function MessageList({ messages, isTyping, ratingThanksText, matchId }) {
   const containerRef = useRef(null);
   const [ratedMessages, setRatedMessages] = useState({});
   const [pollVotes, setPollVotes] = useState({});
+  const [triviaVotes, setTriviaVotes] = useState({}); // maps questionId -> { selectedIndex, correctIndex, isCorrect }
 
   const scrollToBottom = () => {
     if (containerRef.current) {
@@ -57,6 +58,35 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
       ...prev,
       [pollId]: optionText
     }));
+  };
+
+  const handleTriviaClick = async (questionId, selectedIndex) => {
+    if (triviaVotes[questionId]) return;
+
+    const username = localStorage.getItem('fifa_fan_handle') || 'GuestFan';
+    try {
+      const res = await submitTriviaAnswer({
+        matchId: matchId || 'fifa_2026_001',
+        username,
+        questionId,
+        selectedIndex
+      });
+
+      setTriviaVotes(prev => ({
+        ...prev,
+        [questionId]: {
+          selectedIndex,
+          correctIndex: res.correctIndex,
+          isCorrect: res.correct
+        }
+      }));
+
+      // Trigger standard leaderboard reload events if present
+      const event = new CustomEvent('trivia_score_updated');
+      window.dispatchEvent(event);
+    } catch (err) {
+      console.error("Failed to submit trivia answer:", err);
+    }
   };
 
   /**
@@ -130,7 +160,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
       );
     }
 
-    // 2. Check for Custom Jersey Print Match (Phase 13)
+    // 2. Check for Custom Jersey Print Match
     const merchRegex = /\[MERCH_VOUCHER:\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^\]]+)\]/;
     const merchMatch = text.match(merchRegex);
 
@@ -149,9 +179,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
           </div>
 
           <div className="grid grid-cols-5 gap-3 items-center">
-            {/* CSS-drawn visual Custom Jersey */}
             <div className="col-span-2 relative w-20 h-24 bg-transparent shrink-0 mx-auto flex items-center justify-center">
-              {/* Backing shirt shape */}
               <div 
                 className={`relative w-14 h-20 flex flex-col items-center justify-center rounded-t-md shadow-lg overflow-hidden border border-white/10 ${
                   isArg 
@@ -159,26 +187,22 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
                     : 'bg-[#1e3a8a] border-t-2 border-[#fbbf24]'
                 }`}
               >
-                {/* Custom Name */}
                 <span className={`text-[8px] font-black tracking-widest absolute top-3 uppercase px-1 rounded-sm ${
                   isArg ? 'bg-slate-900 text-stadium-gold' : 'text-slate-100 bg-[#fbbf24]/20'
                 }`}>
                   {custName.substring(0, 7)}
                 </span>
-                {/* Custom Number */}
                 <span className={`text-2xl font-black ${
                   isArg ? 'text-slate-900' : 'text-[#fbbf24]'
                 } mt-3`}>
                   {custNum}
                 </span>
 
-                {/* Left Sleeve */}
                 <div 
                   className={`absolute top-0 -left-3.5 w-4 h-7 rotate-12 rounded-l-md origin-top-right border-l border-white/5 ${
                     isArg ? 'bg-[#38bdf8]' : 'bg-[#1e3a8a]'
                   }`}
                 ></div>
-                {/* Right Sleeve */}
                 <div 
                   className={`absolute top-0 -right-3.5 w-4 h-7 -rotate-12 rounded-r-md origin-top-left border-r border-white/5 ${
                     isArg ? 'bg-[#38bdf8]' : 'bg-[#1e3a8a]'
@@ -187,7 +211,6 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
               </div>
             </div>
 
-            {/* Specifications Details */}
             <div className="col-span-3 text-[11px] space-y-1 font-mono">
               <div className="flex justify-between">
                 <span className="text-slate-400">Team:</span>
@@ -211,7 +234,6 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
             </div>
           </div>
 
-          {/* Scannable print ticket barcode */}
           <div className="flex flex-col items-center pt-1.5 space-y-1">
             <div className="flex h-8 w-full bg-white py-1 px-3.5 justify-between items-center rounded overflow-hidden">
               {[2, 1, 4, 1, 3, 2, 1, 4, 2, 1, 3, 1, 4, 2, 1, 3, 1, 2, 4, 1, 3, 2].map((width, idx) => (
@@ -309,6 +331,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
           const isAi = !isUser;
           const userRating = ratedMessages[msg.id];
           const votedOption = pollVotes[msg.id];
+          const triviaAns = triviaVotes[msg.id];
           
           return (
             <div 
@@ -369,8 +392,59 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
                       })}
                     </div>
                   </div>
+                ) : isAi && msg.isTrivia ? (
+                  // 2. Render Trivia Message Bubble (Phase 15 Card)
+                  <div className="bg-gradient-to-r from-stadium-navy-card to-stadium-navy-bubble border border-stadium-gold/50 rounded-2xl p-4 shadow-md rounded-tl-none space-y-3.5 w-full">
+                    <div>
+                      <div className="flex items-center space-x-1.5 text-stadium-gold text-[10px] font-black uppercase tracking-wider select-none">
+                        <Trophy className="w-4 h-4 text-stadium-gold" />
+                        <span>Live Stadium Trivia</span>
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-100 mt-2">{msg.text.replace('🧠 LIVE FAN TRIVIA:\n', '')}</h4>
+                    </div>
+
+                    <div className="space-y-2">
+                      {msg.options.map((opt, optIdx) => {
+                        const isSelected = triviaAns?.selectedIndex === optIdx;
+                        const isCorrect = triviaAns?.correctIndex === optIdx;
+                        const hasAnswered = !!triviaAns;
+
+                        let styleClass = "border border-stadium-navy-light bg-stadium-navy-deep hover:border-stadium-gold/80 text-slate-300 hover:text-stadium-gold cursor-pointer";
+                        if (hasAnswered) {
+                          if (isCorrect) {
+                            styleClass = "bg-green-500/10 border-green-500 text-green-400";
+                          } else if (isSelected) {
+                            styleClass = "bg-red-500/10 border-red-500 text-red-400";
+                          } else {
+                            styleClass = "border-stadium-navy-light/40 bg-stadium-navy-deep/20 text-slate-500 opacity-60";
+                          }
+                        }
+
+                        return (
+                          <button
+                            key={optIdx}
+                            disabled={hasAnswered}
+                            onClick={() => handleTriviaClick(msg.id, optIdx)}
+                            className={`w-full min-h-[40px] py-2 px-3.5 rounded-xl text-left text-xs font-semibold flex items-center justify-between transition-all ${styleClass}`}
+                          >
+                            <span>{opt}</span>
+                            {hasAnswered && isCorrect && <Check className="w-4 h-4 text-green-400 shrink-0" />}
+                            {hasAnswered && isSelected && !isCorrect && <CloseIcon className="w-4 h-4 text-red-400 shrink-0" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {hasAnswered && (
+                      <p className={`text-[10px] font-bold ${triviaAns.isCorrect ? 'text-green-400 animate-pulse' : 'text-red-400'}`}>
+                        {triviaAns.isCorrect 
+                          ? "🎉 Correct! +10 points added to your score." 
+                          : `❌ Incorrect! The correct answer was: ${msg.options[triviaAns.correctIndex]}`}
+                      </p>
+                    )}
+                  </div>
                 ) : (
-                  // 2. Render Standard Bubble / Receipt Bubble / Merch Bubble
+                  // 3. Render Standard Bubble / Receipt Bubble / Merch Bubble
                   <div 
                     className={`px-4 py-3 rounded-2xl shadow-md border ${
                       isUser 
@@ -390,7 +464,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
                     {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                   
-                  {isAi && msg.id && !msg.isPoll && !msg.text.includes('[RECEIPT:') && !msg.text.includes('[MERCH_VOUCHER:') && (
+                  {isAi && msg.id && !msg.isPoll && !msg.isTrivia && !msg.text.includes('[RECEIPT:') && !msg.text.includes('[MERCH_VOUCHER:') && (
                     <div className="flex items-center space-x-3 ml-4 bg-stadium-navy-deep/40 px-2 py-0.5 rounded-full border border-stadium-navy-light/30">
                       {userRating ? (
                         <span className="text-[9px] text-stadium-gold animate-fade-in font-medium">

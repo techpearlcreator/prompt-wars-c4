@@ -95,8 +95,22 @@ function broadcastMatchPoll(matchId, pollData) {
   io.to(matchId).emit('match_poll', pollData);
 }
 
+/**
+ * Broadcasts a live trivia question to all users in a match room.
+ */
+function broadcastMatchTrivia(matchId, triviaData) {
+  if (!io) {
+    console.warn("Websocket server not initialized yet.");
+    return;
+  }
+  
+  console.log(`Broadcasting trivia to room ${matchId}:`, triviaData);
+  io.to(matchId).emit('match_trivia', triviaData);
+}
+
 module.exports = {
   initWebsocket,
   broadcastMatchEvent,
-  broadcastMatchPoll
+  broadcastMatchPoll,
+  broadcastMatchTrivia
 };

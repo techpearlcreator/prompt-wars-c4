@@ -90,4 +90,43 @@ router.post('/poll', (req, res) => {
   }
 });
 
+/**
+ * @route POST /admin/trivia
+ * @desc Push an interactive fan trivia question to the match chat feed
+ */
+router.post('/trivia', (req, res) => {
+  try {
+    const { matchId, questionId, question, options, correctIndex } = req.body;
+
+    if (!matchId || !question || !options || !Array.isArray(options) || correctIndex === undefined) {
+      return res.status(400).json({ error: "matchId, question, options (array), and correctIndex are required." });
+    }
+
+    const { addTriviaQuestion } = require('../services/triviaService');
+    const newQuestion = addTriviaQuestion(matchId, {
+      questionId,
+      question,
+      options,
+      correctIndex
+    });
+
+    const triviaData = {
+      id: newQuestion.id,
+      question: newQuestion.question,
+      options: newQuestion.options
+    };
+
+    // Broadcast trivia question to all fans watching this match
+    const { broadcastMatchTrivia } = require('../services/websocketService');
+    broadcastMatchTrivia(matchId, triviaData);
+
+    res.status(200).json({
+      success: true,
+      trivia: triviaData
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 module.exports = router;

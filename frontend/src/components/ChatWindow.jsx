@@ -33,7 +33,7 @@ export default function ChatWindow({ matchId, language, t, socket }) {
     loadHistory(localId);
   }, []);
 
-  // 2. Listen for Live WebSocket Polls
+  // 2. Listen for Live WebSocket Polls and Trivia
   useEffect(() => {
     if (!socket) return;
 
@@ -50,10 +50,25 @@ export default function ChatWindow({ matchId, language, t, socket }) {
       setMessages((prev) => [...prev, pollMsg]);
     };
 
+    const handleMatchTrivia = (triviaData) => {
+      console.log("Interactive trivia pushed:", triviaData);
+      const triviaMsg = {
+        id: triviaData.id,
+        sender: 'ai',
+        text: `🧠 LIVE FAN TRIVIA:\n${triviaData.question}`,
+        timestamp: new Date().toISOString(),
+        isTrivia: true,
+        options: triviaData.options
+      };
+      setMessages((prev) => [...prev, triviaMsg]);
+    };
+
     socket.on('match_poll', handleMatchPoll);
+    socket.on('match_trivia', handleMatchTrivia);
 
     return () => {
       socket.off('match_poll', handleMatchPoll);
+      socket.off('match_trivia', handleMatchTrivia);
     };
   }, [socket]);
 
@@ -288,6 +303,7 @@ export default function ChatWindow({ matchId, language, t, socket }) {
       <MessageList 
         messages={messages} 
         isTyping={isTyping} 
+        matchId={matchId}
         ratingThanksText={t.ratingThanks}
       />
 
