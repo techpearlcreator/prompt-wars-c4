@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  /* Custom scrollbar for chat message area */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: theme('colors.stadium.navy.deep');
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: theme('colors.stadium.navy.light');
+    border-radius: 3px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: theme('colors.stadium.gold.DEFAULT');
+  }
+}
+
+/* Base styles override */
+body {
+  font-family: 'Outfit', 'Inter', sans-serif;
+  overflow: hidden;
+}
