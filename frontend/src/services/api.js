@@ -200,3 +200,17 @@ export async function fetchMerchOrders(matchId) {
     throw error;
   }
 }
+
+/**
+ * Fetch live transit wait times and rideshare surge multiplier metrics.
+ */
+export async function fetchTransitMetrics(matchId) {
+  try {
+    const response = await fetch(`/api/transit/${matchId}`);
+    if (!response.ok) throw new Error("Failed to fetch live transit metrics.");
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch Transit Error:", error.message);
+    throw error;
+  }
+}

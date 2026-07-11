@@ -128,11 +128,23 @@
           "text": "[RECEIPT: ord_42995, Nonna's Pizza Slice, 2, $12, pickup, Section 112, 5 mins]",
           "sender": "ai",
           "timestamp": 1783779695783
+        },
+        {
+          "id": "msg_1783780741126_gxcfg",
+          "text": "\"buy Argentina jersey name MESSI number 10 size L",
+          "sender": "user",
+          "timestamp": 1783780741126
+        },
+        {
+          "id": "msg_1783780741135_rzeky",
+          "text": "[MERCH_VOUCHER: mch_69802, Argentina, MESSI, 10, L, $120, Apparel Locker Sec 108]",
+          "sender": "ai",
+          "timestamp": 1783780741135
         }
       ],
       "createdAt": 1783767644654,
       "matchId": "fifa_2026_001",
-      "lastActivity": 1783779695783
+      "lastActivity": 1783780741135
     }
   },
   "feedback": {

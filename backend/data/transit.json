@@ -1,0 +1,34 @@
+{
+  "fifa_2026_001": {
+    "rideshare": [
+      { "name": "Uber", "multiplier": "1.8x", "price": 45.00, "wait": 18, "zone": "Zone A (Lot E)" },
+      { "name": "Lyft", "multiplier": "1.6x", "price": 38.00, "wait": 15, "zone": "Zone B (Lot D)" }
+    ],
+    "trains": {
+      "name": "NJ Transit Rail",
+      "line": "Meadowlands Line",
+      "frequency": "Every 10 mins",
+      "status": "on-time"
+    },
+    "shuttles": {
+      "name": "Parking Lot Shuttle",
+      "wait": 8
+    }
+  },
+  "fifa_2026_002": {
+    "rideshare": [
+      { "name": "Uber", "multiplier": "2.2x", "price": 60.00, "wait": 25, "zone": "Rideshare Lot (Lot N)" },
+      { "name": "Lyft", "multiplier": "1.9x", "price": 52.00, "wait": 20, "zone": "Rideshare Lot (Lot N)" }
+    ],
+    "trains": {
+      "name": "Metro C Line Shuttle",
+      "line": "Hawthorne/Lennox Shuttle",
+      "frequency": "Every 5 mins",
+      "status": "on-time"
+    },
+    "shuttles": {
+      "name": "Parking Lot Shuttle",
+      "wait": 10
+    }
+  }
+}

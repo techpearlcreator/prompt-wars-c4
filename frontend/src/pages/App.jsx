@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import ChatWindow from '../components/ChatWindow';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import translations from '../i18n';
-import { fetchConcessionsQueue } from '../services/api';
+import { fetchConcessionsQueue, fetchTransitMetrics } from '../services/api';
 import { Trophy, MapPin, Users, Flame, Info, BarChart2, Globe, Calendar, BellRing, Clock, Heart } from 'lucide-react';
 import { io } from 'socket.io-client';
 
@@ -23,6 +23,9 @@ export default function App() {
 
   // Concessions Queue status
   const [concessions, setConcessions] = useState([]);
+
+  // Transit Surge state
+  const [transit, setTransit] = useState(null);
 
   const socketRef = useRef(null);
   const t = translations[language] || translations['English'];
@@ -83,7 +86,20 @@ export default function App() {
     loadConcessions();
   }, [matchId]);
 
-  // 3. Emit cheer
+  // 3. Fetch Transit Surge Metrics
+  useEffect(() => {
+    const loadTransit = async () => {
+      try {
+        const data = await fetchTransitMetrics(matchId);
+        setTransit(data);
+      } catch (err) {
+        console.warn("Failed to load transit data.");
+      }
+    };
+    loadTransit();
+  }, [matchId]);
+
+  // 4. Emit cheer
   const submitCheer = (team) => {
     if (socketRef.current) {
       socketRef.current.emit('submit_cheer', { matchId, team });
@@ -309,6 +325,40 @@ export default function App() {
               })}
             </div>
           </div>
+
+          {/* Live Transit Board (Phase 14 Widget) */}
+          {transit && (
+            <div className="space-y-2.5 shrink-0">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center">
+                <MapPin className="w-3.5 h-3.5 text-stadium-gold mr-1.5" /> Live Transit Board
+              </h3>
+              <div className="bg-stadium-navy-deep/45 border border-stadium-navy-light/40 rounded-2xl p-3.5 space-y-3 shadow-md font-mono text-[11px]">
+                {/* Rideshare surge listings */}
+                <div className="space-y-2">
+                  {transit.rideshare.map((ride, idx) => (
+                    <div key={idx} className="flex justify-between items-center text-slate-300">
+                      <span className="font-semibold text-slate-200">{ride.name}</span>
+                      <span className="text-[10px] text-slate-400 truncate max-w-[85px]">{ride.zone}</span>
+                      <div className="text-right flex items-center space-x-1.5">
+                        <span className="text-stadium-gold-light font-bold">${ride.price.toFixed(2)}</span>
+                        <span className="px-1 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[9px] font-black">{ride.multiplier}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* Train frequency */}
+                <div className="border-t border-stadium-navy-light/30 pt-2 flex justify-between items-center text-slate-300">
+                  <div>
+                    <span className="font-semibold block text-slate-200">{transit.trains.name}</span>
+                    <span className="text-[10px] text-slate-400">{transit.trains.frequency}</span>
+                  </div>
+                  <span className="px-1.5 py-0.5 rounded bg-green-500/10 text-green-400 border border-green-500/20 text-[9px] font-bold">
+                    {transit.trains.status.toUpperCase()}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Event Feed */}
           <div className="space-y-3">

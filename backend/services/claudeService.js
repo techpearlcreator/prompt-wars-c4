@@ -126,7 +126,7 @@ const translations = {
 };
 
 /**
- * Smart mock responses with localization, sentiment, wayfinding, queue prediction, emergency, lost-companion, food ordering, and custom jersey.
+ * Smart mock responses with localization, sentiment, wayfinding, queue prediction, emergency, lost-companion, food ordering, custom jersey, and transit suggestions.
  */
 function generateMockResponse(query, matchId, language, sentiment) {
   const q = query.toLowerCase();
@@ -166,6 +166,27 @@ function generateMockResponse(query, matchId, language, sentiment) {
     prefix = "🎉 AMAZING! ";
   } else if (sentiment === 'disappointed') {
     prefix = "I understand the frustration. ";
+  }
+
+  // Transit & Rideshare Surge Comparison Trigger (Phase 14)
+  const isTransitQuery = q.includes('uber') || q.includes('lyft') || q.includes('taxi') || q.includes('rideshare') || 
+                         q.includes('train') || q.includes('metro') || q.includes('shuttle') || q.includes('transit');
+  if (isTransitQuery) {
+    if (isArg) {
+      return `🚗 MetLife Stadium Transit & Rideshare Options:
+- Lyft: $38.00 (1.6x surge multiplier) | 15 min wait time | Lot D (Zone B).
+- Uber: $45.00 (1.8x surge multiplier) | 18 min wait time | Lot E (Zone A).
+- NJ Transit Train (Meadowlands Station): Trains depart every 10 minutes, currently ON TIME. Cost: $10.50.
+- Shuttles: 8 min wait.
+💡 Recommendation: Lyft is currently $7 cheaper than Uber with a shorter line. For a completely surge-free option, the NJ Transit train is highly recommended.`;
+    } else {
+      return `🚗 SoFi Stadium Transit & Rideshare Options:
+- Lyft: $52.00 (1.9x surge multiplier) | 20 min wait time | Rideshare Lot (Lot N).
+- Uber: $60.00 (2.2x surge multiplier) | 25 min wait time | Rideshare Lot (Lot N).
+- Metro C Line Shuttle (Hawthorne/Lennox): Shuttle runs every 5 minutes, currently ON TIME. Free of charge.
+- Shuttles: 10 min wait.
+💡 Recommendation: Lyft is currently $8 cheaper than Uber. To bypass rideshare surge pricing completely, take the free Hawthorne/Lennox metro shuttle.`;
+    }
   }
 
   // Custom Jersey Pre-orders trigger
