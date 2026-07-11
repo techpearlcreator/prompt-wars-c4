@@ -122,3 +122,17 @@ export async function fetchIncidents(matchId) {
     throw error;
   }
 }
+
+/**
+ * Fetch reported lost and found companion logs.
+ */
+export async function fetchReconnectionLogs(matchId) {
+  try {
+    const response = await fetch(`/api/reconnection/${matchId}`);
+    if (!response.ok) throw new Error("Failed to fetch reconnection logs.");
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch Reconnection Error:", error.message);
+    throw error;
+  }
+}

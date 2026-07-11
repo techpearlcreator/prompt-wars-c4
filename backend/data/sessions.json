@@ -37,11 +37,23 @@
           "text": "🚻 Restroom (Sec 112) has an 18-minute wait due to high crowd density. I recommend taking a short walk to Restroom (Sec 104) where the wait is only 2 minutes!",
           "sender": "ai",
           "timestamp": 1783774171643
+        },
+        {
+          "id": "msg_1783778129748_zotz1",
+          "text": "I lost my child Billy in Section 112",
+          "sender": "user",
+          "timestamp": 1783778129748
+        },
+        {
+          "id": "msg_1783778129755_zufsn",
+          "text": "🚨 COMPANION LOCATED: Billy has been found by stadium stewards and is currently safe at the Guest Services Booth (Section 124). Please head there immediately to reunite.",
+          "sender": "ai",
+          "timestamp": 1783778129755
         }
       ],
       "createdAt": 1783767473247,
       "matchId": "fifa_2026_001",
-      "lastActivity": 1783774171643
+      "lastActivity": 1783778129755
     },
     "usr_1783767425736_dtx06i1zz": {
       "messages": [

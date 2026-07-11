@@ -5,6 +5,7 @@ const { saveMessage, saveFeedback, loadSessionHistory } = require('../services/s
 const { analyzeSentiment } = require('../utils/sentimentAnalysis');
 const { logIncident } = require('../services/incidentService');
 const { placeOrder } = require('../services/orderService');
+const { logLostCompanion } = require('../services/reconnectionService');
 
 /**
  * @route POST /chat
@@ -50,7 +51,26 @@ router.post('/', async (req, res, next) => {
       });
     }
 
-    // 3. Scan for commerce keywords to auto-create food orders
+    // 3. Scan for lost companion report
+    const isLostQuery = lowerMessage.includes('lost') || lowerMessage.includes('missing') || lowerMessage.includes('cannot find');
+    if (isLostQuery) {
+      const sectionMatch = lowerMessage.match(/(?:sec|section)\s*(\d+)/i);
+      const section = sectionMatch ? sectionMatch[1] : "112";
+      
+      let name = "Unknown";
+      if (lowerMessage.includes('billy')) name = "Billy";
+      else if (lowerMessage.includes('leo')) name = "Leo";
+      else if (lowerMessage.includes('sarah')) name = "Sarah";
+
+      logLostCompanion({
+        matchId,
+        name,
+        description: message,
+        section
+      });
+    }
+
+    // 4. Scan for commerce keywords to auto-create food orders
     const buyKeywords = ['order', 'buy', 'purchase', 'get some', 'want a', 'want some'];
     const foodKeywords = ['pizza', 'burger', 'hot dog', 'soda', 'coke', 'drink', 'beer'];
     const isOrderQuery = buyKeywords.some(w => lowerMessage.includes(w)) && foodKeywords.some(w => lowerMessage.includes(w));
@@ -60,7 +80,7 @@ router.post('/', async (req, res, next) => {
       const section = sectionMatch ? sectionMatch[1] : "112";
       const isArg = matchId === 'fifa_2026_001';
       
-      let foodItem = { name: "Premium Soda", qty: 1, price: 4.50 };
+      let foodItem = { name: isArg ? "Nonna's Pizza Slice" : "Inglewood Pizza Slice", qty: 2, price: 6.00 };
       if (lowerMessage.includes('pizza')) {
         foodItem = { name: isArg ? "Nonna's Pizza Slice" : "Inglewood Pizza Slice", qty: 2, price: 6.00 };
       } else if (lowerMessage.includes('burger')) {
@@ -77,13 +97,13 @@ router.post('/', async (req, res, next) => {
       });
     }
 
-    // 4. Save user message to database
+    // 5. Save user message to database
     saveMessage(userId, message, 'user', matchId);
 
-    // 5. Call Claude API with matchId, language, and sentiment parameters
+    // 6. Call Claude API with matchId, language, and sentiment parameters
     const aiResponse = await callClaudeAPI(message, matchId, language, sentiment);
     
-    // 6. Save AI response to database
+    // 7. Save AI response to database
     const savedAiMsg = saveMessage(userId, aiResponse, 'ai', matchId);
 
     return res.status(200).json({

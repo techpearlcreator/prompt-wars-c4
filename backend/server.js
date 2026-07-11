@@ -11,6 +11,7 @@ const adminRouter = require('./routes/admin');
 const concessionsRouter = require('./routes/concessions');
 const incidentsRouter = require('./routes/incidents');
 const ordersRouter = require('./routes/orders');
+const reconnectionRouter = require('./routes/reconnection');
 const { initWebsocket } = require('./services/websocketService');
 
 const app = express();
@@ -35,6 +36,7 @@ app.use('/admin', adminRouter);
 app.use('/concessions', concessionsRouter);
 app.use('/incidents', incidentsRouter);
 app.use('/orders', ordersRouter);
+app.use('/reconnection', reconnectionRouter);
 
 // Undefined Routes
 app.use('*', (req, res, next) => {

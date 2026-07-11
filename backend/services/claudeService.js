@@ -3,6 +3,7 @@ const { buildSystemPrompt } = require('../utils/systemPrompt');
 const { getCurrentMatchSummary } = require('./matchContextService');
 const { retrieveVenueContext } = require('./ragService');
 const { getQueueStatusSummary } = require('./commerceService');
+const { searchFoundPerson } = require('./reconnectionService');
 
 /**
  * Call the Claude API with the system prompt containing match, venue, and queue context.
@@ -117,7 +118,7 @@ const translations = {
     var: "VAR审查进球、点球、直接红牌和判罚对象错误。本场比赛已用于检查关键判罚。",
     formationArg: "阿根廷今天采用4-2-3-1阵型，梅西担任前腰，梅西后面是阿尔瓦雷斯。",
     formationFra: "法国今天采用4-3-3阵型，由姆巴佩、吉鲁和登贝莱领衔锋线。",
-    restroomsMetLife: "MetLife体育场的无障碍洗手间位于104、117、128、143区。C门（110-115区）附近，洗手间就在112区和114区旁边。",
+    restroomsMetLife: "MetLife体育场的无障碍洗手间位于104、117、128、143区。C门（110-115区）附近，洗手间就在112区 and 114区旁边。",
     restroomsSoFi: "SoFi体育场的无障碍洗手间位于102、118、203、219区。在YouTube剧院门附近，洗手间在106区和108区旁边。",
     elevatorsMetLife: "MetLife体育场的电梯位于西大厅（112区旁）、东大厅（134区旁）和百事门（124区旁）。",
     elevatorsSoFi: "SoFi体育场的电梯位于VIP大厅（104区旁）、北入口（122区旁）和南入口（140区旁）。"
@@ -125,7 +126,7 @@ const translations = {
 };
 
 /**
- * Smart mock responses with localization, sentiment, wayfinding, queue prediction, emergency, and food ordering invoice parsing.
+ * Smart mock responses with localization, sentiment, wayfinding, queue prediction, emergency, lost-companion search, and food ordering.
  */
 function generateMockResponse(query, matchId, language, sentiment) {
   const q = query.toLowerCase();
@@ -167,6 +168,27 @@ function generateMockResponse(query, matchId, language, sentiment) {
     prefix = "I understand the frustration. ";
   }
 
+  // Lost Companion Lookup Trigger
+  const isLostQuery = q.includes('lost') || q.includes('missing') || q.includes('cannot find');
+  if (isLostQuery) {
+    const sectionMatch = q.match(/(?:sec|section)\s*(\d+)/i);
+    const secStr = sectionMatch ? `Section ${sectionMatch[1]}` : "112";
+    
+    // Call matching logic
+    const matchedItem = searchFoundPerson(matchId, query);
+    if (matchedItem) {
+      return `🚨 COMPANION LOCATED: ${matchedItem.name} has been found by stadium stewards and is currently safe at the ${matchedItem.location}. Please head there immediately to reunite.`;
+    } else {
+      let name = "your companion";
+      if (q.includes('sarah')) name = "Sarah";
+      else if (q.includes('billy')) name = "Billy";
+      else if (q.includes('leo')) name = "Leo";
+
+      const guestBooth = isArg ? "Guest Services Booth near Section 124" : "North Guest Hub near Section 104";
+      return `🚨 REPORT FILED: ${name} has been registered in the lost companions registry. Stewards in Section ${secStr} have been alerted. Please head to the ${guestBooth} immediately to coordinate the search.`;
+    }
+  }
+
   // Food Ordering / Commerce triggers
   const buyKeywords = ['order', 'buy', 'purchase', 'get some', 'want a', 'want some'];
   const foodKeywords = ['pizza', 'burger', 'hot dog', 'soda', 'coke', 'drink', 'beer'];
@@ -199,10 +221,6 @@ function generateMockResponse(query, matchId, language, sentiment) {
   }
   if (q.includes('fight') || q.includes('security help') || q.includes('stole')) {
     return `🚨 SECURITY ALERT: A security team has been dispatched to ${secStr}. Stadium stewards are heading to your location. Please stay clear of confrontation.`;
-  }
-  if (q.includes('lost') || q.includes('missing') || q.includes('child')) {
-    const guestBooth = isArg ? "near Section 124" : "near YouTube Plaza Section 104";
-    return `🚨 MISSING PERSON REPORT FILED: Stadium stewards have been alerted. Please head to the nearest guest service booth located ${guestBooth} immediately so our staff can assist with a physical search.`;
   }
   if (q.includes('fire') || q.includes('hazard') || q.includes('spill')) {
     return `⚠️ SAFETY HAZARD REPORTED: A hazard dispatch log has been filed for ${secStr}. Stadium maintenance and cleaning crews are heading to resolve this immediately. Thank you for reporting!`;

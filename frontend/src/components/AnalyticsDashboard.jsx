@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { fetchAnalytics, fetchIncidents, fetchOrders } from '../services/api';
-import { X, RefreshCw, BarChart2, Shield, HeartHandshake, Zap, AlertTriangle, ShoppingCart } from 'lucide-react';
+import { fetchAnalytics, fetchIncidents, fetchOrders, fetchReconnectionLogs } from '../services/api';
+import { X, RefreshCw, BarChart2, Shield, HeartHandshake, Zap, AlertTriangle, ShoppingCart, Users } from 'lucide-react';
 
 export default function AnalyticsDashboard({ onClose, t, matchId }) {
   const [data, setData] = useState(null);
   const [incidents, setIncidents] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [reconnection, setReconnection] = useState({ lost: [], found: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -21,6 +22,9 @@ export default function AnalyticsDashboard({ onClose, t, matchId }) {
 
       const concessionOrders = await fetchOrders(matchId || 'fifa_2026_001');
       setOrders(concessionOrders.orders || []);
+
+      const recLogs = await fetchReconnectionLogs(matchId || 'fifa_2026_001');
+      setReconnection(recLogs);
     } catch (err) {
       setError("Failed to load statistics database.");
     } finally {
@@ -99,10 +103,66 @@ export default function AnalyticsDashboard({ onClose, t, matchId }) {
                 </div>
               </div>
 
-              {/* Live Concessions Order Monitor (Phase 11 Widget) */}
+              {/* Live Lost & Found Reconnection Monitor (Phase 12 Widget) */}
               <div className="space-y-3.5">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-stadium-gold flex items-center">
-                  <ShoppingCart className="w-4 h-4 text-stadium-gold mr-1.5" /> Live Concession Order Dispatch
+                  <Users className="w-4 h-4 text-stadium-gold mr-1.5" /> Live Reconnection Hub Log
+                </h3>
+                <div className="bg-stadium-navy-deep/40 border border-stadium-navy-light/40 rounded-2xl p-4 space-y-3 max-h-[160px] overflow-y-auto custom-scrollbar">
+                  {reconnection.lost.length === 0 && reconnection.found.length === 0 ? (
+                    <p className="text-xs text-slate-400 text-center py-2">No lost/found companions registered.</p>
+                  ) : (
+                    <div className="space-y-3 text-xs">
+                      {/* Lost Logs */}
+                      {reconnection.lost.map((lst) => {
+                        const isMatched = lst.status === 'matched';
+                        return (
+                          <div key={lst.id} className="flex justify-between items-start border-b border-stadium-navy-light/30 pb-2 last:border-0 last:pb-0">
+                            <div>
+                              <div className="flex items-center space-x-2">
+                                <span className="px-1.5 py-0.2 rounded text-[8px] font-black uppercase bg-red-500/10 text-red-400 border border-red-500/20">LOST</span>
+                                <span className="font-bold text-slate-200">{lst.name}</span>
+                                <span className="text-[10px] text-slate-400">Sec {lst.section}</span>
+                              </div>
+                              <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">{lst.description}</p>
+                            </div>
+                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold ${
+                              isMatched ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse'
+                            }`}>
+                              {isMatched ? 'REUNITED' : 'SEARCHING'}
+                            </span>
+                          </div>
+                        );
+                      })}
+
+                      {/* Found Logs */}
+                      {reconnection.found.map((fnd) => {
+                        const isMatched = fnd.status === 'matched';
+                        return (
+                          <div key={fnd.id} className="flex justify-between items-start border-b border-stadium-navy-light/30 pb-2 last:border-0 last:pb-0">
+                            <div>
+                              <div className="flex items-center space-x-2">
+                                <span className="px-1.5 py-0.2 rounded text-[8px] font-black uppercase bg-green-500/10 text-green-400 border border-green-500/20">FOUND</span>
+                                <span className="font-bold text-slate-200">{fnd.name}</span>
+                                <span className="text-[10px] text-slate-400">{fnd.location}</span>
+                              </div>
+                              <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">{fnd.description}</p>
+                            </div>
+                            <span className={`px-2 py-0.5 rounded text-[9px] font-bold bg-green-500/10 text-green-400 border border-green-500/20`}>
+                              {isMatched ? 'MATCHED' : 'SAFE'}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Live Concessions Order Monitor */}
+              <div className="space-y-3.5">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center">
+                  <ShoppingCart className="w-4 h-4 text-slate-400 mr-1.5" /> Live Concession Order Dispatch
                 </h3>
                 <div className="bg-stadium-navy-deep/40 border border-stadium-navy-light/40 rounded-2xl p-4 space-y-3 max-h-[160px] overflow-y-auto custom-scrollbar">
                   {orders.length === 0 ? (
