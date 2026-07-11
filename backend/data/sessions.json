@@ -18,6 +18,25 @@
       "createdAt": 1783767473247,
       "matchId": "fifa_2026_002",
       "lastActivity": 1783767473252
+    },
+    "usr_1783767425736_dtx06i1zz": {
+      "messages": [
+        {
+          "id": "msg_1783767644654_tq1g6",
+          "text": "Who scored for France?",
+          "sender": "user",
+          "timestamp": 1783767644654
+        },
+        {
+          "id": "msg_1783767644663_evag0",
+          "text": "Argentina is leading Australia 2-1 in the 67th minute here at MetLife Stadium.",
+          "sender": "ai",
+          "timestamp": 1783767644663
+        }
+      ],
+      "createdAt": 1783767644654,
+      "matchId": "fifa_2026_001",
+      "lastActivity": 1783767644663
     }
   },
   "feedback": {

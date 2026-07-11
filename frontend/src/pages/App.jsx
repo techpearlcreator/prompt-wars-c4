@@ -1,17 +1,65 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ChatWindow from '../components/ChatWindow';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import translations from '../i18n';
-import { Trophy, MapPin, Users, Flame, Info, BarChart2, Globe, Calendar } from 'lucide-react';
+import { Trophy, MapPin, Users, Flame, Info, BarChart2, Globe, Calendar, BellRing } from 'lucide-react';
+import { io } from 'socket.io-client';
 
 export default function App() {
   const [matchId, setMatchId] = useState('fifa_2026_001');
   const [language, setLanguage] = useState('English');
   const [showDashboard, setShowDashboard] = useState(false);
 
-  const t = translations[language] || translations['English'];
+  // Live WebSocket overrides
+  const [liveScore, setLiveScore] = useState(null);
+  const [liveMinute, setLiveMinute] = useState(null);
+  const [customEvents, setCustomEvents] = useState([]);
+  const [toast, setToast] = useState(null);
 
+  const t = translations[language] || translations['English'];
   const isArgMatch = matchId === 'fifa_2026_001';
+
+  // 1. Establish WebSocket Connection & Room Joiner
+  useEffect(() => {
+    // Reset live overrides when matchId changes
+    setLiveScore(null);
+    setLiveMinute(null);
+    setCustomEvents([]);
+    setToast(null);
+
+    const socket = io('/', {
+      transports: ['websocket', 'polling']
+    });
+
+    socket.on('connect', () => {
+      console.log('Connected to WebSocket server:', socket.id);
+      socket.emit('join_match', matchId);
+    });
+
+    // Handle live pushed event
+    socket.on('match_event', (event) => {
+      console.log('Live Match Event Received:', event);
+      
+      // Update states
+      setLiveScore(event.liveScore);
+      setLiveMinute(event.liveMinute);
+      setCustomEvents((prev) => [event, ...prev]);
+      
+      // Trigger toast alert
+      setToast(event);
+
+      // Auto-hide toast after 6 seconds
+      const timer = setTimeout(() => {
+        setToast(null);
+      }, 6000);
+
+      return () => clearTimeout(timer);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [matchId]);
 
   return (
     <main 
@@ -21,6 +69,29 @@ export default function App() {
       {/* Premium ambient glow */}
       <div className="absolute top-[-20%] left-[20%] w-[500px] h-[500px] rounded-full bg-stadium-gold/5 blur-[120px] pointer-events-none"></div>
       <div className="absolute bottom-[-10%] right-[10%] w-[400px] h-[400px] rounded-full bg-blue-500/5 blur-[100px] pointer-events-none"></div>
+
+      {/* Floating Real-Time WebSocket Toast Notification */}
+      {toast && (
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-sm sm:max-w-md px-4 animate-in slide-in-from-top-12 duration-300">
+          <div className="bg-stadium-navy-card border border-stadium-gold/80 rounded-2xl p-4 shadow-2xl flex items-start space-x-3.5 bg-gradient-to-r from-stadium-navy-card to-stadium-navy-bubble">
+            <div className="w-9 h-9 rounded-full bg-stadium-gold/10 flex items-center justify-center border border-stadium-gold shrink-0 animate-bounce">
+              <BellRing className="w-4 h-4 text-stadium-gold-light" />
+            </div>
+            <div className="flex-1 space-y-0.5">
+              <div className="flex justify-between items-center">
+                <span className="px-2 py-0.5 rounded bg-stadium-gold text-stadium-navy-deep text-[9px] font-black uppercase tracking-wider">
+                  Live: {toast.type}
+                </span>
+                <span className="text-[10px] text-slate-400 font-bold">Min {toast.minute}'</span>
+              </div>
+              <p className="text-sm font-bold text-slate-100">
+                {toast.player ? `${toast.player}!` : 'Match Update'}
+              </p>
+              <p className="text-xs text-slate-300 leading-normal">{toast.description}</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Navigation Header */}
       <header className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-b border-stadium-navy-light/40 bg-stadium-navy-deep/80 backdrop-blur-md z-10 shrink-0 gap-3">
@@ -101,15 +172,19 @@ export default function App() {
             <div className="flex items-center justify-between w-full text-xs font-bold text-slate-400 px-2 mb-2">
               <span>{isArgMatch ? 'ARG' : 'FRA'}</span>
               <span className="px-2 py-0.5 rounded bg-stadium-gold/10 text-stadium-gold animate-pulse text-[10px]">
-                {isArgMatch ? "MIN 67'" : "MIN 43'"}
+                MIN {liveMinute || (isArgMatch ? "67'" : "43'")}
               </span>
               <span>{isArgMatch ? 'AUS' : 'MAR'}</span>
             </div>
             
             <div className="flex items-center space-x-6">
-              <span className="text-3xl font-extrabold text-slate-100">{isArgMatch ? '2' : '1'}</span>
+              <span className="text-3xl font-extrabold text-slate-100">
+                {liveScore ? liveScore.home : (isArgMatch ? '2' : '1')}
+              </span>
               <span className="text-slate-500 font-medium">:</span>
-              <span className="text-3xl font-extrabold text-slate-100">{isArgMatch ? '1' : '0'}</span>
+              <span className="text-3xl font-extrabold text-slate-100">
+                {liveScore ? liveScore.away : (isArgMatch ? '1' : '0')}
+              </span>
             </div>
             
             <div className="flex justify-between w-full text-[10px] text-slate-400 mt-3 border-t border-stadium-navy-light/40 pt-2 px-1">
@@ -124,55 +199,67 @@ export default function App() {
               <Flame className="w-3.5 h-3.5 text-stadium-gold mr-1.5" /> Recent Events
             </h3>
             
-            {isArgMatch ? (
-              <div className="space-y-3 border-l border-stadium-navy-light/60 ml-2 pl-3 py-1">
-                <div className="relative text-xs">
-                  <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-gold ring-4 ring-stadium-navy-card"></span>
-                  <p className="text-[10px] text-slate-400">Minute 61</p>
-                  <p className="text-slate-200 font-medium">Goal Australia!</p>
-                  <p className="text-[11px] text-slate-400">Duke (Header)</p>
+            <div className="space-y-3 border-l border-stadium-navy-light/60 ml-2 pl-3 py-1">
+              {/* Prepend any dynamically pushed WebSocket events */}
+              {customEvents.map((evt, index) => (
+                <div key={`custom-${index}`} className="relative text-xs animate-in slide-in-from-left duration-300">
+                  <span className="absolute left-[-17px] top-1.5 w-2.5 h-2.5 rounded-full bg-stadium-gold ring-4 ring-stadium-navy-card"></span>
+                  <p className="text-[10px] text-stadium-gold font-bold">Minute {evt.minute}</p>
+                  <p className="text-slate-200 font-medium">LIVE: {evt.type}</p>
+                  <p className="text-[11px] text-slate-300">{evt.description}</p>
                 </div>
-                <div className="relative text-xs">
-                  <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-navy-light ring-4 ring-stadium-navy-card"></span>
-                  <p className="text-[10px] text-slate-400">Minute 55</p>
-                  <p className="text-slate-200 font-medium">Sub Australia</p>
-                  <p className="text-[11px] text-slate-400">Irvine in / Leckie out</p>
-                </div>
-                <div className="relative text-xs">
-                  <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-gold ring-4 ring-stadium-navy-card"></span>
-                  <p className="text-[10px] text-slate-400">Minute 34</p>
-                  <p className="text-slate-200 font-medium">Goal Confirmed (VAR)</p>
-                  <p className="text-[11px] text-slate-400">Alvarez score check</p>
-                </div>
-                <div className="relative text-xs">
-                  <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-gold ring-4 ring-stadium-navy-card"></span>
-                  <p className="text-[10px] text-slate-400">Minute 12</p>
-                  <p className="text-slate-200 font-medium">Goal Argentina!</p>
-                  <p className="text-[11px] text-slate-400">Messi (Long strike)</p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3 border-l border-stadium-navy-light/60 ml-2 pl-3 py-1">
-                <div className="relative text-xs">
-                  <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-navy-light ring-4 ring-stadium-navy-card"></span>
-                  <p className="text-[10px] text-slate-400">Minute 38</p>
-                  <p className="text-slate-200 font-medium">VAR check: No Penalty</p>
-                  <p className="text-[11px] text-slate-400">Accidental handball ruled</p>
-                </div>
-                <div className="relative text-xs">
-                  <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-navy-light ring-4 ring-stadium-navy-card"></span>
-                  <p className="text-[10px] text-slate-400">Minute 21</p>
-                  <p className="text-slate-200 font-medium">Yellow Card Morocco</p>
-                  <p className="text-[11px] text-slate-400">Amrabat (Tactical foul)</p>
-                </div>
-                <div className="relative text-xs">
-                  <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-gold ring-4 ring-stadium-navy-card"></span>
-                  <p className="text-[10px] text-slate-400">Minute 5</p>
-                  <p className="text-slate-200 font-medium">Goal France!</p>
-                  <p className="text-[11px] text-slate-400">Mbappe (Rebound strike)</p>
-                </div>
-              </div>
-            )}
+              ))}
+
+              {isArgMatch ? (
+                <>
+                  <div className="relative text-xs">
+                    <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-gold ring-4 ring-stadium-navy-card"></span>
+                    <p className="text-[10px] text-slate-400">Minute 61</p>
+                    <p className="text-slate-200 font-medium">Goal Australia!</p>
+                    <p className="text-[11px] text-slate-400">Duke (Header)</p>
+                  </div>
+                  <div className="relative text-xs">
+                    <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-navy-light ring-4 ring-stadium-navy-card"></span>
+                    <p className="text-[10px] text-slate-400">Minute 55</p>
+                    <p className="text-slate-200 font-medium">Sub Australia</p>
+                    <p className="text-[11px] text-slate-400">Irvine in / Leckie out</p>
+                  </div>
+                  <div className="relative text-xs">
+                    <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-gold ring-4 ring-stadium-navy-card"></span>
+                    <p className="text-[10px] text-slate-400">Minute 34</p>
+                    <p className="text-slate-200 font-medium">Goal Confirmed (VAR)</p>
+                    <p className="text-[11px] text-slate-400">Alvarez score check</p>
+                  </div>
+                  <div className="relative text-xs">
+                    <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-gold ring-4 ring-stadium-navy-card"></span>
+                    <p className="text-[10px] text-slate-400">Minute 12</p>
+                    <p className="text-slate-200 font-medium">Goal Argentina!</p>
+                    <p className="text-[11px] text-slate-400">Messi (Long strike)</p>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="relative text-xs">
+                    <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-navy-light ring-4 ring-stadium-navy-card"></span>
+                    <p className="text-[10px] text-slate-400">Minute 38</p>
+                    <p className="text-slate-200 font-medium">VAR check: No Penalty</p>
+                    <p className="text-[11px] text-slate-400">Accidental handball ruled</p>
+                  </div>
+                  <div className="relative text-xs">
+                    <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-navy-light ring-4 ring-stadium-navy-card"></span>
+                    <p className="text-[10px] text-slate-400">Minute 21</p>
+                    <p className="text-slate-200 font-medium">Yellow Card Morocco</p>
+                    <p className="text-[11px] text-slate-400">Amrabat (Tactical foul)</p>
+                  </div>
+                  <div className="relative text-xs">
+                    <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-gold ring-4 ring-stadium-navy-card"></span>
+                    <p className="text-[10px] text-slate-400">Minute 5</p>
+                    <p className="text-slate-200 font-medium">Goal France!</p>
+                    <p className="text-[11px] text-slate-400">Mbappe (Rebound strike)</p>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Quick Info Box */}

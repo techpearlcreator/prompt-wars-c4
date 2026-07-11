@@ -1,14 +1,23 @@
 require('dotenv').config();
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const logger = require('./middleware/logger');
 const errorHandler = require('./middleware/errorHandler');
 const healthRouter = require('./routes/health');
 const chatRouter = require('./routes/chat');
 const analyticsRouter = require('./routes/analytics');
+const adminRouter = require('./routes/admin');
+const { initWebsocket } = require('./services/websocketService');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Create HTTP Server
+const server = http.createServer(app);
+
+// Initialize Websocket service
+initWebsocket(server);
 
 // Global Middlewares
 app.use(cors());
@@ -19,6 +28,7 @@ app.use(logger);
 app.use('/health', healthRouter);
 app.use('/chat', chatRouter);
 app.use('/analytics', analyticsRouter);
+app.use('/admin', adminRouter);
 
 // Undefined Routes
 app.use('*', (req, res, next) => {
@@ -30,7 +40,7 @@ app.use('*', (req, res, next) => {
 // Error handling Middleware
 app.use(errorHandler);
 
-// Start Server
-app.listen(PORT, () => {
+// Start Server on HTTP Server instance
+server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
