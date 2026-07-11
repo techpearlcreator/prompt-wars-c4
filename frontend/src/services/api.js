@@ -168,3 +168,35 @@ export async function fetchOrders(matchId) {
     throw error;
   }
 }
+
+/**
+ * Submit a custom jersey merchandise order.
+ */
+export async function submitMerchOrder(order) {
+  try {
+    const response = await fetch('/api/merch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(order)
+    });
+    if (!response.ok) throw new Error("Failed to submit merchandise order.");
+    return await response.json();
+  } catch (error) {
+    console.error("Submit Merch Error:", error.message);
+    throw error;
+  }
+}
+
+/**
+ * Fetch custom merchandise order logs.
+ */
+export async function fetchMerchOrders(matchId) {
+  try {
+    const response = await fetch(`/api/merch/${matchId}`);
+    if (!response.ok) throw new Error("Failed to fetch merchandise orders.");
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch Merch Error:", error.message);
+    throw error;
+  }
+}

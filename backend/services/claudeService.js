@@ -118,7 +118,7 @@ const translations = {
     var: "VAR审查进球、点球、直接红牌和判罚对象错误。本场比赛已用于检查关键判罚。",
     formationArg: "阿根廷今天采用4-2-3-1阵型，梅西担任前腰，梅西后面是阿尔瓦雷斯。",
     formationFra: "法国今天采用4-3-3阵型，由姆巴佩、吉鲁和登贝莱领衔锋线。",
-    restroomsMetLife: "MetLife体育场的无障碍洗手间位于104、117、128、143区。C门（110-115区）附近，洗手间就在112区 and 114区旁边。",
+    restroomsMetLife: "MetLife体育场的无障碍洗手间位于104、117、128、143区。C门（110-115区）附近，洗手间就在112区和114区旁边。",
     restroomsSoFi: "SoFi体育场的无障碍洗手间位于102、118、203、219区。在YouTube剧院门附近，洗手间在106区和108区旁边。",
     elevatorsMetLife: "MetLife体育场的电梯位于西大厅（112区旁）、东大厅（134区旁）和百事门（124区旁）。",
     elevatorsSoFi: "SoFi体育场的电梯位于VIP大厅（104区旁）、北入口（122区旁）和南入口（140区旁）。"
@@ -126,7 +126,7 @@ const translations = {
 };
 
 /**
- * Smart mock responses with localization, sentiment, wayfinding, queue prediction, emergency, lost-companion search, and food ordering.
+ * Smart mock responses with localization, sentiment, wayfinding, queue prediction, emergency, lost-companion, food ordering, and custom jersey.
  */
 function generateMockResponse(query, matchId, language, sentiment) {
   const q = query.toLowerCase();
@@ -166,6 +166,25 @@ function generateMockResponse(query, matchId, language, sentiment) {
     prefix = "🎉 AMAZING! ";
   } else if (sentiment === 'disappointed') {
     prefix = "I understand the frustration. ";
+  }
+
+  // Custom Jersey Pre-orders trigger
+  const isJerseyQuery = (q.includes('jersey') || q.includes('shirt') || q.includes('kit')) && 
+                        (q.includes('order') || q.includes('buy') || q.includes('custom') || q.includes('print') || q.includes('pre-order'));
+  if (isJerseyQuery) {
+    const team = isArg ? "Argentina" : "France";
+    const ordNum = Math.floor(Math.random() * 90000) + 10000;
+    
+    const nameMatch = q.match(/(?:name|named)\s+([a-zA-Z0-9]+)/i);
+    const jerseyName = nameMatch ? nameMatch[1].toUpperCase() : (isArg ? "MESSI" : "MBAPPE");
+
+    const numMatch = q.match(/(?:number|no|#)\s*(\d+)/i);
+    const jerseyNumber = numMatch ? numMatch[1] : "10";
+
+    const sizeMatch = q.match(/\b(s|m|l|xl|xxl)\b/i);
+    const size = sizeMatch ? sizeMatch[1].toUpperCase() : "L";
+
+    return `[MERCH_VOUCHER: mch_${ordNum}, ${team}, ${jerseyName}, ${jerseyNumber}, ${size}, $120, Apparel Locker Sec 108]`;
   }
 
   // Lost Companion Lookup Trigger

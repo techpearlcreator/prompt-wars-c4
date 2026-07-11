@@ -12,6 +12,7 @@ const concessionsRouter = require('./routes/concessions');
 const incidentsRouter = require('./routes/incidents');
 const ordersRouter = require('./routes/orders');
 const reconnectionRouter = require('./routes/reconnection');
+const merchRouter = require('./routes/merch');
 const { initWebsocket } = require('./services/websocketService');
 
 const app = express();
@@ -40,7 +41,8 @@ app.get('/', (req, res) => {
       concessions: "/concessions/:matchId",
       incidents: "/incidents/:matchId",
       orders: "/orders/:matchId",
-      reconnection: "/reconnection/:matchId"
+      reconnection: "/reconnection/:matchId",
+      merch: "/merch/:matchId"
     }
   });
 });
@@ -54,6 +56,7 @@ app.use('/concessions', concessionsRouter);
 app.use('/incidents', incidentsRouter);
 app.use('/orders', ordersRouter);
 app.use('/reconnection', reconnectionRouter);
+app.use('/merch', merchRouter);
 
 // Undefined Routes
 app.use('*', (req, res, next) => {

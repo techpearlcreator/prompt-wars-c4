@@ -104,11 +104,35 @@
           "text": "🍕 Nonnas Pizza (Sec 114) is currently congested with a 20-minute wait. I highly recommend Nonnas Pizza (Sec 324) which is clear with only a 4-minute wait!",
           "sender": "ai",
           "timestamp": 1783774255113
+        },
+        {
+          "id": "msg_1783779676560_eziri",
+          "text": "I lost my child Billy in Section 112",
+          "sender": "user",
+          "timestamp": 1783779676560
+        },
+        {
+          "id": "msg_1783779676581_4pn3u",
+          "text": "🚨 COMPANION LOCATED: Billy has been found by stadium stewards and is currently safe at the Guest Services Booth (Section 124). Please head there immediately to reunite.",
+          "sender": "ai",
+          "timestamp": 1783779676581
+        },
+        {
+          "id": "msg_1783779695778_4a4if",
+          "text": "Order 2 pizza to section 112",
+          "sender": "user",
+          "timestamp": 1783779695778
+        },
+        {
+          "id": "msg_1783779695783_2uubs",
+          "text": "[RECEIPT: ord_42995, Nonna's Pizza Slice, 2, $12, pickup, Section 112, 5 mins]",
+          "sender": "ai",
+          "timestamp": 1783779695783
         }
       ],
       "createdAt": 1783767644654,
       "matchId": "fifa_2026_001",
-      "lastActivity": 1783774255113
+      "lastActivity": 1783779695783
     }
   },
   "feedback": {

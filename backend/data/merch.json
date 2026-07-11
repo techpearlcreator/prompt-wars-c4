@@ -1,0 +1,27 @@
+{
+  "fifa_2026_001": [
+    {
+      "id": "mch_1783779878821_juy5",
+      "team": "Argentina",
+      "jerseyName": "MESSI",
+      "jerseyNumber": "10",
+      "size": "L",
+      "price": 120,
+      "status": "printing",
+      "location": "Apparel Locker (Section 108)",
+      "timestamp": "2026-07-11T14:24:38.821Z"
+    },
+    {
+      "id": "mch_1783765102839",
+      "team": "Argentina",
+      "jerseyName": "MESSI",
+      "jerseyNumber": "10",
+      "size": "L",
+      "price": 120,
+      "status": "ready",
+      "location": "Apparel Locker (Section 108)",
+      "timestamp": "2026-07-11T12:00:00.000Z"
+    }
+  ],
+  "fifa_2026_002": []
+}

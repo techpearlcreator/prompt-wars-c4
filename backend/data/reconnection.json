@@ -2,6 +2,14 @@
   "fifa_2026_001": {
     "lost": [
       {
+        "id": "lst_1783779676553",
+        "name": "Billy",
+        "description": "I lost my child Billy in Section 112",
+        "section": "112",
+        "timestamp": "2026-07-11T14:21:16.553Z",
+        "status": "searching"
+      },
+      {
         "id": "lst_1783778129747",
         "name": "Billy",
         "description": "I lost my child Billy in Section 112",

@@ -6,6 +6,7 @@ const { analyzeSentiment } = require('../utils/sentimentAnalysis');
 const { logIncident } = require('../services/incidentService');
 const { placeOrder } = require('../services/orderService');
 const { logLostCompanion } = require('../services/reconnectionService');
+const { placeMerchOrder } = require('../services/merchService');
 
 /**
  * @route POST /chat
@@ -70,7 +71,33 @@ router.post('/', async (req, res, next) => {
       });
     }
 
-    // 4. Scan for commerce keywords to auto-create food orders
+    // 4. Scan for custom jersey pre-orders
+    const isJerseyQuery = (lowerMessage.includes('jersey') || lowerMessage.includes('shirt') || lowerMessage.includes('kit')) && 
+                          (lowerMessage.includes('order') || lowerMessage.includes('buy') || lowerMessage.includes('custom') || lowerMessage.includes('print') || lowerMessage.includes('pre-order'));
+    if (isJerseyQuery) {
+      const isArg = matchId === 'fifa_2026_001';
+      const team = isArg ? "Argentina" : "France";
+      
+      // Parse custom name, number, size
+      const nameMatch = lowerMessage.match(/(?:name|named)\s+([a-zA-Z0-9]+)/i);
+      const jerseyName = nameMatch ? nameMatch[1].toUpperCase() : (isArg ? "MESSI" : "MBAPPE");
+
+      const numMatch = lowerMessage.match(/(?:number|no|#)\s*(\d+)/i);
+      const jerseyNumber = numMatch ? numMatch[1] : "10";
+
+      const sizeMatch = lowerMessage.match(/\b(s|m|l|xl|xxl)\b/i);
+      const size = sizeMatch ? sizeMatch[1].toUpperCase() : "L";
+
+      placeMerchOrder({
+        matchId,
+        team,
+        jerseyName,
+        jerseyNumber,
+        size
+      });
+    }
+
+    // 5. Scan for commerce keywords to auto-create food orders
     const buyKeywords = ['order', 'buy', 'purchase', 'get some', 'want a', 'want some'];
     const foodKeywords = ['pizza', 'burger', 'hot dog', 'soda', 'coke', 'drink', 'beer'];
     const isOrderQuery = buyKeywords.some(w => lowerMessage.includes(w)) && foodKeywords.some(w => lowerMessage.includes(w));
@@ -97,13 +124,13 @@ router.post('/', async (req, res, next) => {
       });
     }
 
-    // 5. Save user message to database
+    // 6. Save user message to database
     saveMessage(userId, message, 'user', matchId);
 
-    // 6. Call Claude API with matchId, language, and sentiment parameters
+    // 7. Call Claude API with matchId, language, and sentiment parameters
     const aiResponse = await callClaudeAPI(message, matchId, language, sentiment);
     
-    // 7. Save AI response to database
+    // 8. Save AI response to database
     const savedAiMsg = saveMessage(userId, aiResponse, 'ai', matchId);
 
     return res.status(200).json({

@@ -1,11 +1,11 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Sparkles, User, ThumbsUp, ThumbsDown, Receipt, QrCode } from 'lucide-react';
+import { Sparkles, User, ThumbsUp, ThumbsDown, Receipt, ShoppingBag } from 'lucide-react';
 import TypingIndicator from './TypingIndicator';
 import { sendMessageFeedback } from '../services/api';
 
 /**
  * MessageList Component
- * Displays the scrollable message thread with interactive poll cards, receipt invoices, and RAG wayfinding decorators.
+ * Displays the scrollable message thread with interactive poll cards, receipt invoices, custom jerseys, and RAG wayfinding decorators.
  */
 export default function MessageList({ messages, isTyping, ratingThanksText }) {
   const containerRef = useRef(null);
@@ -81,7 +81,6 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
             <span className="text-[10px] text-slate-500 font-semibold">{id}</span>
           </div>
 
-          {/* Details */}
           <div className="space-y-1 text-[11px]">
             <div className="flex justify-between">
               <span className="text-slate-500">Method:</span>
@@ -97,7 +96,6 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
             </div>
           </div>
 
-          {/* Items Table */}
           <div className="border-t border-b border-slate-200 py-2.5 my-2 space-y-1">
             <div className="flex justify-between font-bold text-slate-700 text-[10px] uppercase">
               <span>Item Description</span>
@@ -111,13 +109,11 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
             </div>
           </div>
 
-          {/* Total */}
           <div className="flex justify-between items-center text-sm font-black text-slate-900 pt-1">
             <span>TOTAL COST:</span>
             <span>{price}</span>
           </div>
 
-          {/* CSS-drawn mock barcode */}
           <div className="flex flex-col items-center pt-2.5 space-y-1.5">
             <div className="flex h-9 w-full bg-white border border-slate-300 py-1.5 px-3.5 justify-between items-center rounded overflow-hidden">
               {[1, 2, 4, 1, 3, 2, 1, 4, 2, 1, 3, 1, 4, 2, 1, 3, 1, 2, 4, 1, 3, 2].map((width, idx) => (
@@ -129,6 +125,104 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
               ))}
             </div>
             <span className="text-[9px] text-slate-500 font-bold tracking-widest uppercase">SCAN TO PICKUP</span>
+          </div>
+        </div>
+      );
+    }
+
+    // 2. Check for Custom Jersey Print Match (Phase 13)
+    const merchRegex = /\[MERCH_VOUCHER:\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^\]]+)\]/;
+    const merchMatch = text.match(merchRegex);
+
+    if (merchMatch) {
+      const [_, id, teamName, custName, custNum, size, price, location] = merchMatch;
+      const isArg = teamName.trim() === 'Argentina';
+
+      return (
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 my-2 shadow-xl space-y-4 max-w-sm select-none text-slate-100">
+          <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+            <div className="flex items-center space-x-1.5 text-stadium-gold font-bold uppercase tracking-wider text-xs">
+              <ShoppingBag className="w-4 h-4 text-stadium-gold" />
+              <span>Custom Merch Voucher</span>
+            </div>
+            <span className="text-[10px] text-slate-400 font-semibold">{id.substring(0, 10)}</span>
+          </div>
+
+          <div className="grid grid-cols-5 gap-3 items-center">
+            {/* CSS-drawn visual Custom Jersey */}
+            <div className="col-span-2 relative w-20 h-24 bg-transparent shrink-0 mx-auto flex items-center justify-center">
+              {/* Backing shirt shape */}
+              <div 
+                className={`relative w-14 h-20 flex flex-col items-center justify-center rounded-t-md shadow-lg overflow-hidden border border-white/10 ${
+                  isArg 
+                    ? 'bg-[linear-gradient(90deg,_#38bdf8_20%,_#ffffff_20%,_#ffffff_40%,_#38bdf8_40%,_#38bdf8_60%,_#ffffff_60%,_#ffffff_80%,_#38bdf8_80%)]' 
+                    : 'bg-[#1e3a8a] border-t-2 border-[#fbbf24]'
+                }`}
+              >
+                {/* Custom Name */}
+                <span className={`text-[8px] font-black tracking-widest absolute top-3 uppercase px-1 rounded-sm ${
+                  isArg ? 'bg-slate-900 text-stadium-gold' : 'text-slate-100 bg-[#fbbf24]/20'
+                }`}>
+                  {custName.substring(0, 7)}
+                </span>
+                {/* Custom Number */}
+                <span className={`text-2xl font-black ${
+                  isArg ? 'text-slate-900' : 'text-[#fbbf24]'
+                } mt-3`}>
+                  {custNum}
+                </span>
+
+                {/* Left Sleeve */}
+                <div 
+                  className={`absolute top-0 -left-3.5 w-4 h-7 rotate-12 rounded-l-md origin-top-right border-l border-white/5 ${
+                    isArg ? 'bg-[#38bdf8]' : 'bg-[#1e3a8a]'
+                  }`}
+                ></div>
+                {/* Right Sleeve */}
+                <div 
+                  className={`absolute top-0 -right-3.5 w-4 h-7 -rotate-12 rounded-r-md origin-top-left border-r border-white/5 ${
+                    isArg ? 'bg-[#38bdf8]' : 'bg-[#1e3a8a]'
+                  }`}
+                ></div>
+              </div>
+            </div>
+
+            {/* Specifications Details */}
+            <div className="col-span-3 text-[11px] space-y-1 font-mono">
+              <div className="flex justify-between">
+                <span className="text-slate-400">Team:</span>
+                <span className="font-bold text-slate-200">{teamName}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Size:</span>
+                <span className="font-bold text-slate-200">{size}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Price:</span>
+                <span className="font-bold text-stadium-gold-light">{price}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-400">Status:</span>
+                <span className="font-bold text-amber-500 animate-pulse">PRINTING</span>
+              </div>
+              <p className="text-[9px] text-slate-400 leading-tight border-t border-slate-800 pt-1 mt-1 truncate">
+                Locker: {location}
+              </p>
+            </div>
+          </div>
+
+          {/* Scannable print ticket barcode */}
+          <div className="flex flex-col items-center pt-1.5 space-y-1">
+            <div className="flex h-8 w-full bg-white py-1 px-3.5 justify-between items-center rounded overflow-hidden">
+              {[2, 1, 4, 1, 3, 2, 1, 4, 2, 1, 3, 1, 4, 2, 1, 3, 1, 2, 4, 1, 3, 2].map((width, idx) => (
+                <div 
+                  key={idx} 
+                  className="h-full bg-slate-900 shrink-0" 
+                  style={{ width: `${width * 1.5}px`, opacity: idx % 2 === 0 ? 1 : 0 }}
+                ></div>
+              ))}
+            </div>
+            <span className="text-[9px] text-slate-400 font-bold tracking-wider">PRINT QUEUE VOUCHER</span>
           </div>
         </div>
       );
@@ -276,7 +370,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
                     </div>
                   </div>
                 ) : (
-                  // 2. Render Standard Bubble / Receipt Bubble
+                  // 2. Render Standard Bubble / Receipt Bubble / Merch Bubble
                   <div 
                     className={`px-4 py-3 rounded-2xl shadow-md border ${
                       isUser 
@@ -296,7 +390,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
                     {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                   
-                  {isAi && msg.id && !msg.isPoll && !msg.text.includes('[RECEIPT:') && (
+                  {isAi && msg.id && !msg.isPoll && !msg.text.includes('[RECEIPT:') && !msg.text.includes('[MERCH_VOUCHER:') && (
                     <div className="flex items-center space-x-3 ml-4 bg-stadium-navy-deep/40 px-2 py-0.5 rounded-full border border-stadium-navy-light/30">
                       {userRating ? (
                         <span className="text-[9px] text-stadium-gold animate-fade-in font-medium">

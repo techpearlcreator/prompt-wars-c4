@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { fetchAnalytics, fetchIncidents, fetchOrders, fetchReconnectionLogs } from '../services/api';
-import { X, RefreshCw, BarChart2, Shield, HeartHandshake, Zap, AlertTriangle, ShoppingCart, Users } from 'lucide-react';
+import { fetchAnalytics, fetchIncidents, fetchOrders, fetchReconnectionLogs, fetchMerchOrders } from '../services/api';
+import { X, RefreshCw, BarChart2, Shield, HeartHandshake, Zap, AlertTriangle, ShoppingCart, Users, ShoppingBag } from 'lucide-react';
 
 export default function AnalyticsDashboard({ onClose, t, matchId }) {
   const [data, setData] = useState(null);
   const [incidents, setIncidents] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [merch, setMerch] = useState([]);
   const [reconnection, setReconnection] = useState({ lost: [], found: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,6 +26,9 @@ export default function AnalyticsDashboard({ onClose, t, matchId }) {
 
       const recLogs = await fetchReconnectionLogs(matchId || 'fifa_2026_001');
       setReconnection(recLogs);
+
+      const merchList = await fetchMerchOrders(matchId || 'fifa_2026_001');
+      setMerch(merchList.orders || []);
     } catch (err) {
       setError("Failed to load statistics database.");
     } finally {
@@ -103,10 +107,48 @@ export default function AnalyticsDashboard({ onClose, t, matchId }) {
                 </div>
               </div>
 
-              {/* Live Lost & Found Reconnection Monitor (Phase 12 Widget) */}
+              {/* Live Custom Jersey Production Log (Phase 13 Widget) */}
               <div className="space-y-3.5">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-stadium-gold flex items-center">
-                  <Users className="w-4 h-4 text-stadium-gold mr-1.5" /> Live Reconnection Hub Log
+                  <ShoppingBag className="w-4 h-4 text-stadium-gold mr-1.5" /> Live Custom Jersey Printing Log
+                </h3>
+                <div className="bg-stadium-navy-deep/40 border border-stadium-navy-light/40 rounded-2xl p-4 space-y-3 max-h-[160px] overflow-y-auto custom-scrollbar">
+                  {merch.length === 0 ? (
+                    <p className="text-xs text-slate-400 text-center py-2">No custom jerseys ordered yet.</p>
+                  ) : (
+                    merch.map((job) => {
+                      const isPrinting = job.status === 'printing';
+                      return (
+                        <div key={job.id} className="flex justify-between items-start text-xs border-b border-stadium-navy-light/30 pb-2.5 last:border-0 last:pb-0 font-mono">
+                          <div className="space-y-0.5">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-[10px] text-slate-400">{job.id.substring(0, 10)}</span>
+                              <span className="font-bold text-slate-200">{job.team}</span>
+                              <span className="text-[10px] text-stadium-gold">Size {job.size}</span>
+                            </div>
+                            <p className="text-[11px] text-slate-300">
+                              Name: <span className="text-slate-100 font-bold">{job.jerseyName}</span> | No: <span className="text-slate-100 font-bold">#{job.jerseyNumber}</span>
+                            </p>
+                          </div>
+                          <div className="text-right space-y-0.5">
+                            <p className="font-bold text-slate-200">${job.price}</p>
+                            <span className={`px-1.5 py-0.2 rounded text-[8px] font-bold ${
+                              isPrinting ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 animate-pulse' : 'bg-green-500/10 text-green-400 border border-green-500/20'
+                            }`}>
+                              {job.status.toUpperCase()}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
+              {/* Live Lost & Found Reconnection Monitor */}
+              <div className="space-y-3.5">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center">
+                  <Users className="w-4 h-4 text-slate-400 mr-1.5" /> Live Reconnection Hub Log
                 </h3>
                 <div className="bg-stadium-navy-deep/40 border border-stadium-navy-light/40 rounded-2xl p-4 space-y-3 max-h-[160px] overflow-y-auto custom-scrollbar">
                   {reconnection.lost.length === 0 && reconnection.found.length === 0 ? (
