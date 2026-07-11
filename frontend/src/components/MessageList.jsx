@@ -144,79 +144,109 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
               <span>Wayfinding Seat Map</span>
             </div>
             <span className="text-[10px] text-slate-400 font-semibold truncate max-w-[130px]">{venue}</span>
-          </div>
-
-          {/* 2D Stadium Map Diagram */}
-          <div className="relative w-full h-[180px] bg-slate-950/70 rounded-xl border border-slate-800/80 overflow-hidden">
+          {/* 3D Isometric Stadium Map Diagram */}
+          <div 
+            className="relative w-full h-[210px] bg-slate-950/70 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center"
+            style={{ perspective: '800px' }}
+          >
             {/* Grid background lines */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:20px_20px] opacity-15"></div>
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:20px_20px] opacity-15 pointer-events-none"></div>
 
-            {/* Seating Ring Oval */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[220px] h-[120px] rounded-full border-[3px] border-slate-700/50 bg-slate-900/40 flex items-center justify-center">
-              {/* Inner pitch field grass */}
-              <div className="w-[120px] h-[55px] rounded-full border border-emerald-500/20 bg-emerald-600/10 flex items-center justify-center relative">
-                <div className="absolute inset-y-0 left-1/2 w-[1px] bg-emerald-500/10"></div>
-                <div className="w-8 h-8 rounded-full border border-emerald-500/10 absolute"></div>
+            {/* Isometric projected canvas */}
+            <div 
+              className="relative w-[280px] h-[160px]" 
+              style={{ transform: 'rotateX(55deg) rotateZ(-45deg)', transformStyle: 'preserve-3d' }}
+            >
+              {/* Soccer Field Grass Pitch (Layer 1 - translateZ(0px)) */}
+              <div 
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110px] h-[55px] rounded-sm border border-emerald-500/35 bg-emerald-600/15 flex items-center justify-center"
+                style={{ transform: 'translate3d(-50%, -50%, 0px)', transformStyle: 'preserve-3d' }}
+              >
+                {/* Half-line and Center circle */}
+                <div className="absolute inset-y-0 left-1/2 w-[1px] bg-emerald-500/20"></div>
+                <div className="w-8 h-8 rounded-full border border-emerald-500/20 absolute"></div>
               </div>
-            </div>
 
-            {/* Quadrant Section Labels */}
-            <div className="absolute text-[8px] font-bold text-slate-600 top-6 left-12">SEC 104</div>
-            <div className="absolute text-[8px] font-bold text-slate-600 top-6 right-12">SEC 143</div>
-            <div className="absolute text-[8px] font-bold text-slate-600 bottom-6 left-12">SEC 128</div>
-            <div className="absolute text-[8px] font-bold text-slate-600 bottom-6 right-12">SEC 112</div>
+              {/* Lower Seating Bowl Tier 100 (Layer 2 - translateZ(12px)) */}
+              <div 
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[160px] h-[90px] rounded-full border-[3px] border-slate-700/50 bg-slate-800/20 flex items-center justify-center"
+                style={{ transform: 'translate3d(-50%, -50%, 12px)', transformStyle: 'preserve-3d' }}
+              ></div>
 
-            {/* SVG Path Route with animated dash */}
-            <svg className="absolute inset-0 w-full h-full pointer-events-none">
-              <defs>
-                <style>{`
-                  @keyframes dash {
-                    to {
-                      stroke-dashoffset: -20;
+              {/* Upper Seating Bowl Tier 200 (Layer 3 - translateZ(24px)) */}
+              <div 
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[210px] h-[115px] rounded-full border-[3px] border-stadium-gold/30 bg-slate-800/10 shadow-[0_0_15px_rgba(251,191,36,0.15)] flex items-center justify-center"
+                style={{ transform: 'translate3d(-50%, -50%, 24px)', transformStyle: 'preserve-3d' }}
+              ></div>
+
+              {/* Quadrant Section Labels projected flat on seating */}
+              <div className="absolute text-[7px] font-black text-slate-500/60 top-4 left-10" style={{ transform: 'translateZ(26px)' }}>SEC 104</div>
+              <div className="absolute text-[7px] font-black text-slate-500/60 top-4 right-10" style={{ transform: 'translateZ(26px)' }}>SEC 143</div>
+              <div className="absolute text-[7px] font-black text-slate-500/60 bottom-4 left-10" style={{ transform: 'translateZ(26px)' }}>SEC 128</div>
+              <div className="absolute text-[7px] font-black text-slate-500/60 bottom-4 right-10" style={{ transform: 'translateZ(26px)' }}>SEC 112</div>
+
+              {/* SVG Path Route on projected ground */}
+              <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ transform: 'translateZ(25px)' }}>
+                <defs>
+                  <style>{`
+                    @keyframes dash {
+                      to {
+                        stroke-dashoffset: -20;
+                      }
                     }
-                  }
-                  .route-line {
-                    stroke: #fbbf24;
-                    stroke-width: 2.5;
-                    stroke-dasharray: 6,4;
-                    animation: dash 1s linear infinite;
-                  }
-                `}</style>
-              </defs>
-              <line 
-                x1={`${start.x}%`} 
-                y1={`${start.y}%`} 
-                x2={`${targetCoord.x}%`} 
-                y2={`${targetCoord.y}%`} 
-                className="route-line" 
-              />
-            </svg>
+                    .route-line-3d {
+                      stroke: #fbbf24;
+                      stroke-width: 2.5;
+                      stroke-dasharray: 6,4;
+                      animation: dash 1s linear infinite;
+                    }
+                  `}</style>
+                </defs>
+                <line 
+                  x1={`${start.x}%`} 
+                  y1={`${start.y}%`} 
+                  x2={`${targetCoord.x}%`} 
+                  y2={`${targetCoord.y}%`} 
+                  className="route-line-3d" 
+                />
+              </svg>
 
-            {/* Blinking Seat Marker Radar Beacon */}
-            <div 
-              style={{ left: `${start.x}%`, top: `${start.y}%` }} 
-              className="absolute -translate-x-1/2 -translate-y-1/2 z-10"
-            >
-              <div className="relative flex h-3.5 w-3.5 items-center justify-center">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500 border border-white"></span>
+              {/* Blinking Seat Marker Radar Beacon (Upright Stand - translateZ(36px)) */}
+              <div 
+                style={{ 
+                  left: `${start.x}%`, 
+                  top: `${start.y}%`,
+                  transform: 'translate3d(-50%, -50%, 36px) rotateZ(45deg) rotateX(-55deg)',
+                  transformStyle: 'preserve-3d'
+                }} 
+                className="absolute z-10"
+              >
+                <div className="relative flex h-3.5 w-3.5 items-center justify-center">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-80"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500 border border-white shadow-sm"></span>
+                </div>
+                <span className="absolute left-4 -top-1 px-1 bg-amber-500/90 text-slate-950 text-[7px] font-black rounded uppercase select-none pointer-events-none tracking-wider shadow">
+                  SEAT
+                </span>
               </div>
-              <span className="absolute left-4 -top-1 px-1 bg-amber-500/90 text-slate-950 text-[8px] font-black rounded uppercase select-none pointer-events-none">
-                SEAT
-              </span>
-            </div>
 
-            {/* Destination Target Marker */}
-            <div 
-              style={{ left: `${targetCoord.x}%`, top: `${targetCoord.y}%` }} 
-              className="absolute -translate-x-1/2 -translate-y-1/2 z-10"
-            >
-              <div className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500 text-slate-950 font-semibold border-2 border-slate-900 shadow-md">
-                <span className="text-[10px]">{targetCoord.label.split(' ')[0]}</span>
+              {/* Destination Target Marker (Upright Stand - translateZ(36px)) */}
+              <div 
+                style={{ 
+                  left: `${targetCoord.x}%`, 
+                  top: `${targetCoord.y}%`,
+                  transform: 'translate3d(-50%, -50%, 36px) rotateZ(45deg) rotateX(-55deg)',
+                  transformStyle: 'preserve-3d'
+                }} 
+                className="absolute z-10"
+              >
+                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500 text-slate-950 font-black border-2 border-slate-900 shadow-md">
+                  <span className="text-[9px]">{targetCoord.label.split(' ')[0]}</span>
+                </div>
+                <span className="absolute left-6.5 -top-1 px-1.5 py-0.5 bg-emerald-500/90 text-slate-950 text-[7px] font-black rounded uppercase tracking-wider whitespace-nowrap select-none pointer-events-none shadow">
+                  GOAL
+                </span>
               </div>
-              <span className="absolute left-6 -top-1 px-1.5 py-0.5 bg-emerald-500/90 text-slate-950 text-[7px] font-black rounded uppercase tracking-wider whitespace-nowrap select-none pointer-events-none">
-                GOAL
-              </span>
             </div>
           </div>
 

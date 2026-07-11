@@ -3,13 +3,16 @@ import ChatWindow from '../components/ChatWindow';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import translations from '../i18n';
 import { fetchConcessionsQueue, fetchTransitMetrics, fetchTriviaLeaderboard, fetchCommentaryStreams, toggleCommentaryListen } from '../services/api';
-import { Trophy, MapPin, Users, Flame, Info, BarChart2, Globe, Calendar, BellRing, Clock, Heart, Edit2, Check } from 'lucide-react';
+import { Trophy, MapPin, Users, Flame, Info, BarChart2, Globe, Calendar, BellRing, Clock, Heart, Edit2, Check, Menu, X } from 'lucide-react';
 import { io } from 'socket.io-client';
 
 export default function App() {
   const [matchId, setMatchId] = useState('fifa_2026_001');
   const [language, setLanguage] = useState('English');
   const [showDashboard, setShowDashboard] = useState(false);
+
+  // Responsive Drawer Sidebar (Phase 18)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Live WebSocket overrides
   const [liveScore, setLiveScore] = useState(null);
@@ -269,6 +272,15 @@ export default function App() {
       {/* Navigation Header */}
       <header className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-b border-stadium-navy-light/40 bg-stadium-navy-deep/80 backdrop-blur-md z-10 shrink-0 gap-3">
         <div className="flex items-center space-x-3 w-full sm:w-auto">
+          {/* Hamburger menu button for mobile screens */}
+          <button
+            onClick={() => setIsSidebarOpen(true)}
+            className="p-2 rounded-xl bg-stadium-navy-light hover:bg-stadium-navy-accent text-slate-300 hover:text-stadium-gold cursor-pointer transition-colors lg:hidden shrink-0"
+            aria-label="Toggle Menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
           <div className="w-9 h-9 rounded-lg bg-stadium-gold flex items-center justify-center shadow-lg">
             <Trophy className="w-5 h-5 text-stadium-navy-deep" />
           </div>
@@ -325,19 +337,40 @@ export default function App() {
       </header>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden p-4 gap-4 z-10">
+      <div className="flex-1 flex overflow-hidden p-4 gap-4 z-10 relative">
         
-        {/* Desktop Side Stats Panel */}
+        {/* Slide-out overlay backdrop for mobile screens */}
+        {isSidebarOpen && (
+          <div 
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 lg:hidden"
+          ></div>
+        )}
+
+        {/* Live Match Stats Panel (Responsive Drawer / Static Sidebar) */}
         <section 
           aria-label="Live Match Status" 
-          className="hidden md:flex flex-col w-80 shrink-0 bg-stadium-navy-card rounded-3xl border border-stadium-navy-light/60 p-5 space-y-4 overflow-y-auto custom-scrollbar"
+          className={`fixed inset-y-0 left-0 z-40 w-80 flex flex-col bg-stadium-navy-card border-r border-stadium-navy-light/40 lg:border border-stadium-navy-light/60 lg:rounded-3xl p-5 space-y-4 overflow-y-auto custom-scrollbar transition-transform duration-300 ${
+            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          } lg:translate-x-0 lg:relative lg:flex shrink-0`}
         >
           {/* Header */}
-          <div>
-            <h2 className="text-xs font-bold uppercase tracking-widest text-stadium-gold">Live Match Board</h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              {isArgMatch ? 'MetLife Stadium • East Rutherford' : 'SoFi Stadium • Inglewood'}
-            </p>
+          <div className="flex justify-between items-center shrink-0">
+            <div>
+              <h2 className="text-xs font-bold uppercase tracking-widest text-stadium-gold">Live Match Board</h2>
+              <p className="text-xs text-slate-400 mt-0.5">
+                {isArgMatch ? 'MetLife Stadium • East Rutherford' : 'SoFi Stadium • Inglewood'}
+              </p>
+            </div>
+            
+            {/* Close button for mobile drawer view */}
+            <button
+              onClick={() => setIsSidebarOpen(false)}
+              className="lg:hidden p-1.5 rounded-lg bg-stadium-navy-deep text-slate-400 hover:text-stadium-gold hover:bg-stadium-navy-light cursor-pointer transition-colors"
+              aria-label="Close Menu"
+            >
+              <X className="w-4 h-4" />
+            </button>
           </div>
 
           {/* Match Score Card */}
