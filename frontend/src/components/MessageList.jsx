@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Sparkles, User, ThumbsUp, ThumbsDown, Receipt, ShoppingBag, Trophy, Check, X as CloseIcon } from 'lucide-react';
+import { Sparkles, User, ThumbsUp, ThumbsDown, Receipt, ShoppingBag, Trophy, Check, X } from 'lucide-react';
 import TypingIndicator from './TypingIndicator';
 import { sendMessageFeedback, submitTriviaAnswer } from '../services/api';
 
@@ -400,11 +400,11 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                         <Trophy className="w-4 h-4 text-stadium-gold" />
                         <span>Live Stadium Trivia</span>
                       </div>
-                      <h4 className="text-sm font-bold text-slate-100 mt-2">{msg.text.replace('🧠 LIVE FAN TRIVIA:\n', '')}</h4>
+                      <h4 className="text-sm font-bold text-slate-100 mt-2">{msg.text ? msg.text.replace('🧠 LIVE FAN TRIVIA:\n', '') : ''}</h4>
                     </div>
 
                     <div className="space-y-2">
-                      {msg.options.map((opt, optIdx) => {
+                      {msg.options && msg.options.map((opt, optIdx) => {
                         const isSelected = triviaAns?.selectedIndex === optIdx;
                         const isCorrect = triviaAns?.correctIndex === optIdx;
                         const hasAnswered = !!triviaAns;
@@ -429,13 +429,13 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                           >
                             <span>{opt}</span>
                             {hasAnswered && isCorrect && <Check className="w-4 h-4 text-green-400 shrink-0" />}
-                            {hasAnswered && isSelected && !isCorrect && <CloseIcon className="w-4 h-4 text-red-400 shrink-0" />}
+                            {hasAnswered && isSelected && !isCorrect && <X className="w-4 h-4 text-red-400 shrink-0" />}
                           </button>
                         );
                       })}
                     </div>
 
-                    {hasAnswered && (
+                    {hasAnswered && triviaAns && msg.options && (
                       <p className={`text-[10px] font-bold ${triviaAns.isCorrect ? 'text-green-400 animate-pulse' : 'text-red-400'}`}>
                         {triviaAns.isCorrect 
                           ? "🎉 Correct! +10 points added to your score." 

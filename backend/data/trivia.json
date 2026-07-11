@@ -20,6 +20,26 @@
           "Brazil"
         ],
         "correctIndex": 1
+      },
+      {
+        "id": "q_01",
+        "question": "Who won the 2022 World Cup?",
+        "options": [
+          "France",
+          "Argentina",
+          "Brazil"
+        ],
+        "correctIndex": 1
+      },
+      {
+        "id": "q_01",
+        "question": "Who won the 2022 World Cup?",
+        "options": [
+          "France",
+          "Argentina",
+          "Brazil"
+        ],
+        "correctIndex": 1
       }
     ],
     "leaderboard": [
