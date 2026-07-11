@@ -28,6 +28,23 @@ app.use(cors());
 app.use(express.json());
 app.use(logger);
 
+// Welcome Root Route
+app.get('/', (req, res) => {
+  res.json({
+    status: "online",
+    message: "FIFA World Cup 2026 - Stadium API Service",
+    endpoints: {
+      health: "/health",
+      chat: "/chat",
+      analytics: "/analytics",
+      concessions: "/concessions/:matchId",
+      incidents: "/incidents/:matchId",
+      orders: "/orders/:matchId",
+      reconnection: "/reconnection/:matchId"
+    }
+  });
+});
+
 // API Routes
 app.use('/health', healthRouter);
 app.use('/chat', chatRouter);
