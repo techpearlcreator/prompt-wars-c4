@@ -1,0 +1,37 @@
+{
+  "fifa_2026_001": [
+    {
+      "id": "ord_1783775394878_g9r2",
+      "items": [
+        {
+          "name": "Pizza Slice",
+          "qty": 2,
+          "price": 6
+        }
+      ],
+      "total": 12,
+      "type": "pickup",
+      "section": "112",
+      "eta": 5,
+      "status": "preparing",
+      "timestamp": "2026-07-11T13:09:54.879Z"
+    },
+    {
+      "id": "ord_1783765910243",
+      "items": [
+        {
+          "name": "Nonna's Pizza Slice",
+          "qty": 2,
+          "price": 6
+        }
+      ],
+      "total": 12,
+      "type": "pickup",
+      "section": "114",
+      "eta": 5,
+      "status": "ready",
+      "timestamp": "2026-07-11T12:30:00.000Z"
+    }
+  ],
+  "fifa_2026_002": []
+}

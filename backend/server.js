@@ -10,6 +10,7 @@ const analyticsRouter = require('./routes/analytics');
 const adminRouter = require('./routes/admin');
 const concessionsRouter = require('./routes/concessions');
 const incidentsRouter = require('./routes/incidents');
+const ordersRouter = require('./routes/orders');
 const { initWebsocket } = require('./services/websocketService');
 
 const app = express();
@@ -33,6 +34,7 @@ app.use('/analytics', analyticsRouter);
 app.use('/admin', adminRouter);
 app.use('/concessions', concessionsRouter);
 app.use('/incidents', incidentsRouter);
+app.use('/orders', ordersRouter);
 
 // Undefined Routes
 app.use('*', (req, res, next) => {

@@ -125,7 +125,7 @@ const translations = {
 };
 
 /**
- * Smart mock responses with localization, sentiment, wayfinding, queue prediction, and emergency safety routing.
+ * Smart mock responses with localization, sentiment, wayfinding, queue prediction, emergency, and food ordering invoice parsing.
  */
 function generateMockResponse(query, matchId, language, sentiment) {
   const q = query.toLowerCase();
@@ -165,6 +165,28 @@ function generateMockResponse(query, matchId, language, sentiment) {
     prefix = "🎉 AMAZING! ";
   } else if (sentiment === 'disappointed') {
     prefix = "I understand the frustration. ";
+  }
+
+  // Food Ordering / Commerce triggers
+  const buyKeywords = ['order', 'buy', 'purchase', 'get some', 'want a', 'want some'];
+  const foodKeywords = ['pizza', 'burger', 'hot dog', 'soda', 'coke', 'drink', 'beer'];
+  const isOrderQuery = buyKeywords.some(w => q.includes(w)) && foodKeywords.some(w => q.includes(w));
+
+  if (isOrderQuery) {
+    const sectionMatch = q.match(/(?:sec|section)\s*(\d+)/i);
+    const secStr = sectionMatch ? `Section ${sectionMatch[1]}` : "Section 112";
+    const ordNum = Math.floor(Math.random() * 90000) + 10000;
+    
+    if (q.includes('pizza')) {
+      const pizzaName = isArg ? "Nonna's Pizza Slice" : "Inglewood Pizza Slice";
+      return `[RECEIPT: ord_${ordNum}, ${pizzaName}, 2, $12, pickup, ${secStr}, 5 mins]`;
+    }
+    if (q.includes('burger')) {
+      const burgerName = isArg ? "Bud's Burger" : "LA Street Burger";
+      const deliveryType = q.includes('deliver') || q.includes('seat') ? 'delivery' : 'pickup';
+      const eta = deliveryType === 'delivery' ? '12 mins' : '5 mins';
+      return `[RECEIPT: ord_${ordNum}, ${burgerName}, 1, $9.50, ${deliveryType}, ${secStr}, ${eta}]`;
+    }
   }
 
   // Safety & Emergency Responder

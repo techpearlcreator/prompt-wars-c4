@@ -1,16 +1,16 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Sparkles, User, ThumbsUp, ThumbsDown } from 'lucide-react';
+import { Sparkles, User, ThumbsUp, ThumbsDown, Receipt, QrCode } from 'lucide-react';
 import TypingIndicator from './TypingIndicator';
 import { sendMessageFeedback } from '../services/api';
 
 /**
  * MessageList Component
- * Displays the scrollable message thread with interactive poll cards and RAG wayfinding decorators.
+ * Displays the scrollable message thread with interactive poll cards, receipt invoices, and RAG wayfinding decorators.
  */
 export default function MessageList({ messages, isTyping, ratingThanksText }) {
   const containerRef = useRef(null);
   const [ratedMessages, setRatedMessages] = useState({});
-  const [pollVotes, setPollVotes] = useState({}); // { [pollId]: optionText }
+  const [pollVotes, setPollVotes] = useState({});
 
   const scrollToBottom = () => {
     if (containerRef.current) {
@@ -37,16 +37,14 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
     }
   };
 
-  // Mock voting distribution for visual effect when fan votes
   const getMockPollResults = (pollId, options) => {
-    // Deterministic mock percentages based on poll ID length/options
     const seed = pollId.charCodeAt(pollId.length - 1) || 7;
     let percentages = [];
     if (options.length === 2) {
-      const p1 = (seed * 8) % 40 + 40; // 40-80%
+      const p1 = (seed * 8) % 40 + 40;
       percentages = [p1, 100 - p1];
     } else {
-      const p1 = (seed * 9) % 30 + 45; // 45-75%
+      const p1 = (seed * 9) % 30 + 45;
       const p2 = Math.round((100 - p1) * 0.6);
       const p3 = 100 - p1 - p2;
       percentages = [p1, p2, p3];
@@ -66,6 +64,75 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
    */
   const renderMessageContent = (text) => {
     if (typeof text !== 'string') return text;
+
+    // 1. Check for Concessions Receipt Match
+    const receiptRegex = /\[RECEIPT:\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^,]+),\s*([^\]]+)\]/;
+    const receiptMatch = text.match(receiptRegex);
+    
+    if (receiptMatch) {
+      const [_, id, itemName, qty, price, type, section, eta] = receiptMatch;
+      return (
+        <div className="bg-white border-2 border-dashed border-slate-300 text-slate-800 rounded-xl p-4 my-2 shadow-lg space-y-4 max-w-sm font-mono text-xs select-none">
+          <div className="flex justify-between items-center border-b border-slate-200 pb-2">
+            <div className="flex items-center space-x-1.5 text-slate-900 font-bold uppercase tracking-wider">
+              <Receipt className="w-4 h-4 text-stadium-gold-dark" />
+              <span>Concession Ticket</span>
+            </div>
+            <span className="text-[10px] text-slate-500 font-semibold">{id}</span>
+          </div>
+
+          {/* Details */}
+          <div className="space-y-1 text-[11px]">
+            <div className="flex justify-between">
+              <span className="text-slate-500">Method:</span>
+              <span className="font-bold text-slate-900 uppercase">{type}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Seating:</span>
+              <span className="font-bold text-slate-900">{section}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500">Est. Time:</span>
+              <span className="font-bold text-emerald-600">{eta}</span>
+            </div>
+          </div>
+
+          {/* Items Table */}
+          <div className="border-t border-b border-slate-200 py-2.5 my-2 space-y-1">
+            <div className="flex justify-between font-bold text-slate-700 text-[10px] uppercase">
+              <span>Item Description</span>
+              <span>Qty</span>
+              <span>Total</span>
+            </div>
+            <div className="flex justify-between text-slate-800 font-semibold">
+              <span className="truncate max-w-[160px]">{itemName}</span>
+              <span>{qty}</span>
+              <span>{price}</span>
+            </div>
+          </div>
+
+          {/* Total */}
+          <div className="flex justify-between items-center text-sm font-black text-slate-900 pt-1">
+            <span>TOTAL COST:</span>
+            <span>{price}</span>
+          </div>
+
+          {/* CSS-drawn mock barcode */}
+          <div className="flex flex-col items-center pt-2.5 space-y-1.5">
+            <div className="flex h-9 w-full bg-white border border-slate-300 py-1.5 px-3.5 justify-between items-center rounded overflow-hidden">
+              {[1, 2, 4, 1, 3, 2, 1, 4, 2, 1, 3, 1, 4, 2, 1, 3, 1, 2, 4, 1, 3, 2].map((width, idx) => (
+                <div 
+                  key={idx} 
+                  className="h-full bg-slate-900 shrink-0" 
+                  style={{ width: `${width * 1.6}px`, opacity: idx % 2 === 0 ? 1 : 0 }}
+                ></div>
+              ))}
+            </div>
+            <span className="text-[9px] text-slate-500 font-bold tracking-widest uppercase">SCAN TO PICKUP</span>
+          </div>
+        </div>
+      );
+    }
 
     const parts = text.split(/(🚻|🛗|🚧|🍕)/g);
     return parts.map((part, idx) => {
@@ -181,7 +248,6 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
                         const isSelected = votedOption === opt;
                         
                         return votedOption ? (
-                          // Result View
                           <div 
                             key={optIdx} 
                             className="relative h-10 w-full rounded-xl bg-stadium-navy-deep border border-stadium-navy-light/40 overflow-hidden flex items-center px-3.5 justify-between text-xs"
@@ -198,7 +264,6 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
                             <span className="relative font-bold text-slate-400">{percent}%</span>
                           </div>
                         ) : (
-                          // Vote Input View
                           <button
                             key={optIdx}
                             onClick={() => handlePollVote(msg.id, opt)}
@@ -211,7 +276,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
                     </div>
                   </div>
                 ) : (
-                  // 2. Render Standard Text Bubble
+                  // 2. Render Standard Bubble / Receipt Bubble
                   <div 
                     className={`px-4 py-3 rounded-2xl shadow-md border ${
                       isUser 
@@ -231,7 +296,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
                     {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                   
-                  {isAi && msg.id && !msg.isPoll && (
+                  {isAi && msg.id && !msg.isPoll && !msg.text.includes('[RECEIPT:') && (
                     <div className="flex items-center space-x-3 ml-4 bg-stadium-navy-deep/40 px-2 py-0.5 rounded-full border border-stadium-navy-light/30">
                       {userRating ? (
                         <span className="text-[9px] text-stadium-gold animate-fade-in font-medium">

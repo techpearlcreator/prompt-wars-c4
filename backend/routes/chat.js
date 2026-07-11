@@ -4,6 +4,7 @@ const { callClaudeAPI } = require('../services/claudeService');
 const { saveMessage, saveFeedback, loadSessionHistory } = require('../services/sessionService');
 const { analyzeSentiment } = require('../utils/sentimentAnalysis');
 const { logIncident } = require('../services/incidentService');
+const { placeOrder } = require('../services/orderService');
 
 /**
  * @route POST /chat
@@ -49,13 +50,40 @@ router.post('/', async (req, res, next) => {
       });
     }
 
-    // 3. Save user message to database
+    // 3. Scan for commerce keywords to auto-create food orders
+    const buyKeywords = ['order', 'buy', 'purchase', 'get some', 'want a', 'want some'];
+    const foodKeywords = ['pizza', 'burger', 'hot dog', 'soda', 'coke', 'drink', 'beer'];
+    const isOrderQuery = buyKeywords.some(w => lowerMessage.includes(w)) && foodKeywords.some(w => lowerMessage.includes(w));
+
+    if (isOrderQuery) {
+      const sectionMatch = lowerMessage.match(/(?:sec|section)\s*(\d+)/i);
+      const section = sectionMatch ? sectionMatch[1] : "112";
+      const isArg = matchId === 'fifa_2026_001';
+      
+      let foodItem = { name: "Premium Soda", qty: 1, price: 4.50 };
+      if (lowerMessage.includes('pizza')) {
+        foodItem = { name: isArg ? "Nonna's Pizza Slice" : "Inglewood Pizza Slice", qty: 2, price: 6.00 };
+      } else if (lowerMessage.includes('burger')) {
+        foodItem = { name: isArg ? "Bud's Burger" : "LA Street Burger", qty: 1, price: 9.50 };
+      }
+
+      const deliveryType = lowerMessage.includes('deliver') || lowerMessage.includes('seat') ? 'delivery' : 'pickup';
+
+      placeOrder({
+        matchId,
+        items: [foodItem],
+        type: deliveryType,
+        section
+      });
+    }
+
+    // 4. Save user message to database
     saveMessage(userId, message, 'user', matchId);
 
-    // 4. Call Claude API with matchId, language, and sentiment parameters
+    // 5. Call Claude API with matchId, language, and sentiment parameters
     const aiResponse = await callClaudeAPI(message, matchId, language, sentiment);
     
-    // 5. Save AI response to database
+    // 6. Save AI response to database
     const savedAiMsg = saveMessage(userId, aiResponse, 'ai', matchId);
 
     return res.status(200).json({
