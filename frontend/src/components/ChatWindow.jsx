@@ -6,9 +6,9 @@ import { RefreshCw, AlertCircle } from 'lucide-react';
 
 /**
  * ChatWindow Component
- * Manages chat flow, state, and errors.
+ * Manages chat flow, state, errors, and live poll socket listeners.
  */
-export default function ChatWindow({ matchId, language, t }) {
+export default function ChatWindow({ matchId, language, t, socket }) {
   const [messages, setMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState(null);
@@ -24,6 +24,30 @@ export default function ChatWindow({ matchId, language, t }) {
     setUserId(localId);
     loadHistory(localId);
   }, []);
+
+  // 2. Listen for Live WebSocket Polls
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleMatchPoll = (pollData) => {
+      console.log("Interactive poll pushed:", pollData);
+      const pollMsg = {
+        id: pollData.id,
+        sender: 'ai',
+        text: `📊 LIVE FAN POLL:\n${pollData.question}`,
+        timestamp: new Date().toISOString(),
+        isPoll: true,
+        options: pollData.options
+      };
+      setMessages((prev) => [...prev, pollMsg]);
+    };
+
+    socket.on('match_poll', handleMatchPoll);
+
+    return () => {
+      socket.off('match_poll', handleMatchPoll);
+    };
+  }, [socket]);
 
   const loadHistory = async (id) => {
     try {
@@ -49,7 +73,6 @@ export default function ChatWindow({ matchId, language, t }) {
     setIsTyping(true);
 
     try {
-      // Pass userId, matchId, and language to the backend
       const data = await sendChatMessage(text, userId, matchId, language);
       const aiMsg = {
         id: data.id || `ai_${Date.now()}`,
@@ -70,7 +93,6 @@ export default function ChatWindow({ matchId, language, t }) {
     setError(null);
     setIsTyping(false);
     
-    // Clear on backend
     try {
       await fetch(`/api/chat/history/${userId}`, { method: 'DELETE' }).catch(() => {});
     } catch (e) {}

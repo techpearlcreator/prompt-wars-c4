@@ -80,11 +80,23 @@
           "text": "🚻 Restrooms at MetLife Stadium are fully accessible. Family toilets are in Section 104, 117, 128, and 143. C-Gate toilets are right adjacent to Section 112 and 114.",
           "sender": "ai",
           "timestamp": 1783773628909
+        },
+        {
+          "id": "msg_1783774255104_rs12h",
+          "text": "How long is the wait for pizza at Section 114?",
+          "sender": "user",
+          "timestamp": 1783774255104
+        },
+        {
+          "id": "msg_1783774255113_nqotm",
+          "text": "🍕 Nonnas Pizza (Sec 114) is currently congested with a 20-minute wait. I highly recommend Nonnas Pizza (Sec 324) which is clear with only a 4-minute wait!",
+          "sender": "ai",
+          "timestamp": 1783774255113
         }
       ],
       "createdAt": 1783767644654,
       "matchId": "fifa_2026_001",
-      "lastActivity": 1783773628909
+      "lastActivity": 1783774255113
     }
   },
   "feedback": {

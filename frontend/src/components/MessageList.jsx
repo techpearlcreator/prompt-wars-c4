@@ -5,11 +5,12 @@ import { sendMessageFeedback } from '../services/api';
 
 /**
  * MessageList Component
- * Displays the scrollable message thread with inline feedback loops and RAG wayfinding decorators.
+ * Displays the scrollable message thread with interactive poll cards and RAG wayfinding decorators.
  */
 export default function MessageList({ messages, isTyping, ratingThanksText }) {
   const containerRef = useRef(null);
   const [ratedMessages, setRatedMessages] = useState({});
+  const [pollVotes, setPollVotes] = useState({}); // { [pollId]: optionText }
 
   const scrollToBottom = () => {
     if (containerRef.current) {
@@ -34,6 +35,30 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
     } catch (err) {
       console.error("Failed to submit message feedback", err);
     }
+  };
+
+  // Mock voting distribution for visual effect when fan votes
+  const getMockPollResults = (pollId, options) => {
+    // Deterministic mock percentages based on poll ID length/options
+    const seed = pollId.charCodeAt(pollId.length - 1) || 7;
+    let percentages = [];
+    if (options.length === 2) {
+      const p1 = (seed * 8) % 40 + 40; // 40-80%
+      percentages = [p1, 100 - p1];
+    } else {
+      const p1 = (seed * 9) % 30 + 45; // 45-75%
+      const p2 = Math.round((100 - p1) * 0.6);
+      const p3 = 100 - p1 - p2;
+      percentages = [p1, p2, p3];
+    }
+    return percentages;
+  };
+
+  const handlePollVote = (pollId, optionText) => {
+    setPollVotes(prev => ({
+      ...prev,
+      [pollId]: optionText
+    }));
   };
 
   /**
@@ -122,6 +147,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
           const isUser = msg.sender === 'user';
           const isAi = !isUser;
           const userRating = ratedMessages[msg.id];
+          const votedOption = pollVotes[msg.id];
           
           return (
             <div 
@@ -137,17 +163,67 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
 
               {/* Message Bubble Column */}
               <div className={`flex flex-col max-w-[80%] md:max-w-[70%]`}>
-                <div 
-                  className={`px-4 py-3 rounded-2xl shadow-md border ${
-                    isUser 
-                      ? 'bg-stadium-gold border-stadium-gold-dark/40 text-stadium-navy-deep rounded-tr-none' 
-                      : 'bg-stadium-navy-bubble border-stadium-navy-light/40 text-slate-100 rounded-tl-none'
-                  }`}
-                >
-                  <div className="text-sm md:text-base leading-relaxed whitespace-pre-line">
-                    {renderMessageContent(msg.text)}
+                
+                {/* 1. Render Poll Message Bubble */}
+                {isAi && msg.isPoll ? (
+                  <div className="bg-gradient-to-r from-stadium-navy-card to-stadium-navy-bubble border border-stadium-gold/50 rounded-2xl p-4 shadow-md rounded-tl-none space-y-3.5 w-full">
+                    <div>
+                      <span className="px-2 py-0.5 rounded bg-stadium-gold text-stadium-navy-deep text-[9px] font-black uppercase tracking-wider select-none">
+                        Community Poll
+                      </span>
+                      <h4 className="text-sm font-bold text-slate-100 mt-2">{msg.text.replace('📊 LIVE FAN POLL:\n', '')}</h4>
+                    </div>
+
+                    <div className="space-y-2">
+                      {msg.options.map((opt, optIdx) => {
+                        const results = getMockPollResults(msg.id, msg.options);
+                        const percent = results[optIdx] || 0;
+                        const isSelected = votedOption === opt;
+                        
+                        return votedOption ? (
+                          // Result View
+                          <div 
+                            key={optIdx} 
+                            className="relative h-10 w-full rounded-xl bg-stadium-navy-deep border border-stadium-navy-light/40 overflow-hidden flex items-center px-3.5 justify-between text-xs"
+                          >
+                            <div 
+                              style={{ width: `${percent}%` }}
+                              className={`absolute left-0 top-0 bottom-0 ${
+                                isSelected ? 'bg-stadium-gold/15' : 'bg-slate-500/5'
+                              } transition-all duration-1000`}
+                            ></div>
+                            <span className={`relative font-semibold ${isSelected ? 'text-stadium-gold' : 'text-slate-300'}`}>
+                              {opt} {isSelected && '✓'}
+                            </span>
+                            <span className="relative font-bold text-slate-400">{percent}%</span>
+                          </div>
+                        ) : (
+                          // Vote Input View
+                          <button
+                            key={optIdx}
+                            onClick={() => handlePollVote(msg.id, opt)}
+                            className="w-full h-10 rounded-xl border border-stadium-navy-light/75 hover:border-stadium-gold/80 bg-stadium-navy-deep hover:bg-stadium-gold/5 text-left px-3.5 text-xs font-semibold text-slate-300 hover:text-stadium-gold transition-all cursor-pointer"
+                          >
+                            {opt}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  // 2. Render Standard Text Bubble
+                  <div 
+                    className={`px-4 py-3 rounded-2xl shadow-md border ${
+                      isUser 
+                        ? 'bg-stadium-gold border-stadium-gold-dark/40 text-stadium-navy-deep rounded-tr-none' 
+                        : 'bg-stadium-navy-bubble border-stadium-navy-light/40 text-slate-100 rounded-tl-none'
+                    }`}
+                  >
+                    <div className="text-sm md:text-base leading-relaxed whitespace-pre-line">
+                      {renderMessageContent(msg.text)}
+                    </div>
+                  </div>
+                )}
                 
                 {/* Timestamp and Feedback loop for AI messages */}
                 <div className={`flex items-center justify-between mt-1 px-1 text-[10px] text-slate-400`}>
@@ -155,7 +231,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
                     {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                   </span>
                   
-                  {isAi && msg.id && (
+                  {isAi && msg.id && !msg.isPoll && (
                     <div className="flex items-center space-x-3 ml-4 bg-stadium-navy-deep/40 px-2 py-0.5 rounded-full border border-stadium-navy-light/30">
                       {userRating ? (
                         <span className="text-[9px] text-stadium-gold animate-fade-in font-medium">

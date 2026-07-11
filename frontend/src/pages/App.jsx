@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import ChatWindow from '../components/ChatWindow';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import translations from '../i18n';
 import { fetchConcessionsQueue } from '../services/api';
-import { Trophy, MapPin, Users, Flame, Info, BarChart2, Globe, Calendar, BellRing, Clock } from 'lucide-react';
+import { Trophy, MapPin, Users, Flame, Info, BarChart2, Globe, Calendar, BellRing, Clock, Heart } from 'lucide-react';
 import { io } from 'socket.io-client';
 
 export default function App() {
@@ -17,9 +17,14 @@ export default function App() {
   const [customEvents, setCustomEvents] = useState([]);
   const [toast, setToast] = useState(null);
 
+  // Cheer Meter State
+  const [cheers, setCheers] = useState({ homePercent: 50, awayPercent: 50 });
+  const [isCheering, setIsCheering] = useState(null); // Animation state
+
   // Concessions Queue status
   const [concessions, setConcessions] = useState([]);
 
+  const socketRef = useRef(null);
   const t = translations[language] || translations['English'];
   const isArgMatch = matchId === 'fifa_2026_001';
 
@@ -29,23 +34,28 @@ export default function App() {
     setLiveMinute(null);
     setCustomEvents([]);
     setToast(null);
+    setCheers({ homePercent: 50, awayPercent: 50 });
 
     const socket = io('/', {
       transports: ['websocket', 'polling']
     });
+    socketRef.current = socket;
 
     socket.on('connect', () => {
       console.log('Connected to WebSocket server:', socket.id);
       socket.emit('join_match', matchId);
     });
 
+    // Handle cheer updates
+    socket.on('cheer_update', (data) => {
+      setCheers(data);
+    });
+
     socket.on('match_event', (event) => {
       console.log('Live Match Event Received:', event);
-      
       setLiveScore(event.liveScore);
       setLiveMinute(event.liveMinute);
       setCustomEvents((prev) => [event, ...prev]);
-      
       setToast(event);
 
       const timer = setTimeout(() => {
@@ -60,7 +70,7 @@ export default function App() {
     };
   }, [matchId]);
 
-  // 2. Fetch Concessions Queue data on matchId changes
+  // 2. Fetch Concessions Queue
   useEffect(() => {
     const loadConcessions = async () => {
       try {
@@ -72,6 +82,15 @@ export default function App() {
     };
     loadConcessions();
   }, [matchId]);
+
+  // 3. Emit cheer
+  const submitCheer = (team) => {
+    if (socketRef.current) {
+      socketRef.current.emit('submit_cheer', { matchId, team });
+      setIsCheering(team);
+      setTimeout(() => setIsCheering(null), 800);
+    }
+  };
 
   return (
     <main 
@@ -169,7 +188,7 @@ export default function App() {
         {/* Desktop Side Stats Panel */}
         <section 
           aria-label="Live Match Status" 
-          className="hidden md:flex flex-col w-80 shrink-0 bg-stadium-navy-card rounded-3xl border border-stadium-navy-light/60 p-5 space-y-5 overflow-y-auto custom-scrollbar"
+          className="hidden md:flex flex-col w-80 shrink-0 bg-stadium-navy-card rounded-3xl border border-stadium-navy-light/60 p-5 space-y-4 overflow-y-auto custom-scrollbar"
         >
           {/* Header */}
           <div>
@@ -202,6 +221,60 @@ export default function App() {
             <div className="flex justify-between w-full text-[10px] text-slate-400 mt-3 border-t border-stadium-navy-light/40 pt-2 px-1">
               <span>{isArgMatch ? 'Argentina' : 'France'}</span>
               <span>{isArgMatch ? 'Australia' : 'Morocco'}</span>
+            </div>
+          </div>
+
+          {/* Live Cheer Meter (Phase 9 Widget) */}
+          <div className="space-y-2.5 shrink-0">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+              <span className="flex items-center"><Heart className="w-3.5 h-3.5 text-stadium-gold mr-1.5" /> Cheer Meter</span>
+              <span className="text-[10px] text-slate-500">Live Crowd Sentiment</span>
+            </h3>
+            
+            <div className="bg-stadium-navy-deep/45 border border-stadium-navy-light/40 rounded-2xl p-3.5 space-y-3.5 shadow-md">
+              {/* Cheer Percent Progress Bar */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-[11px] font-bold text-slate-300 px-0.5">
+                  <span>{isArgMatch ? 'ARG' : 'FRA'} {cheers.homePercent}%</span>
+                  <span>{isArgMatch ? 'AUS' : 'MAR'} {cheers.awayPercent}%</span>
+                </div>
+                <div className="h-2.5 w-full bg-stadium-navy-bubble rounded-full overflow-hidden flex">
+                  <div 
+                    style={{ width: `${cheers.homePercent}%` }} 
+                    className="h-full bg-stadium-gold transition-all duration-500 ease-out"
+                  ></div>
+                  <div 
+                    style={{ width: `${cheers.awayPercent}%` }} 
+                    className="h-full bg-blue-500 transition-all duration-500 ease-out"
+                  ></div>
+                </div>
+              </div>
+
+              {/* Tap to Cheer Buttons */}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => submitCheer('home')}
+                  className={`flex-1 py-1.5 rounded-xl border text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
+                    isCheering === 'home' 
+                      ? 'bg-stadium-gold border-stadium-gold text-stadium-navy-deep scale-95' 
+                      : 'border-stadium-gold/40 hover:border-stadium-gold text-stadium-gold bg-stadium-gold/5'
+                  } cursor-pointer`}
+                >
+                  <span>🎺</span>
+                  <span>Cheer {isArgMatch ? 'ARG' : 'FRA'}</span>
+                </button>
+                <button
+                  onClick={() => submitCheer('away')}
+                  className={`flex-1 py-1.5 rounded-xl border text-[11px] font-bold flex items-center justify-center space-x-1 transition-all ${
+                    isCheering === 'away' 
+                      ? 'bg-blue-500 border-blue-500 text-slate-100 scale-95' 
+                      : 'border-blue-500/40 hover:border-blue-500 text-blue-400 bg-blue-500/5'
+                  } cursor-pointer`}
+                >
+                  <span>🎺</span>
+                  <span>Cheer {isArgMatch ? 'AUS' : 'MAR'}</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -326,7 +399,12 @@ export default function App() {
 
         {/* Chat window space */}
         <div className="flex-1 h-full overflow-hidden">
-          <ChatWindow matchId={matchId} language={language} t={t} />
+          <ChatWindow 
+            matchId={matchId} 
+            language={language} 
+            t={t} 
+            socket={socketRef.current} 
+          />
         </div>
       </div>
 
