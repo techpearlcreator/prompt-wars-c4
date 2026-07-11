@@ -1,0 +1,92 @@
+{
+  "fifa_2026_001": {
+    "stadiumName": "MetLife Stadium",
+    "concessions": [
+      {
+        "id": "pizza_114",
+        "name": "Nonnas Pizza (Sec 114)",
+        "category": "food",
+        "section": "114",
+        "waitTime": 20,
+        "status": "busy"
+      },
+      {
+        "id": "pizza_324",
+        "name": "Nonnas Pizza (Sec 324)",
+        "category": "food",
+        "section": "324",
+        "waitTime": 4,
+        "status": "clear"
+      },
+      {
+        "id": "burger_126",
+        "name": "Buds Burgers (Sec 126)",
+        "category": "food",
+        "section": "126",
+        "waitTime": 12,
+        "status": "moderate"
+      },
+      {
+        "id": "restroom_112",
+        "name": "Restroom (Sec 112)",
+        "category": "restroom",
+        "section": "112",
+        "waitTime": 18,
+        "status": "busy"
+      },
+      {
+        "id": "restroom_104",
+        "name": "Restroom (Sec 104)",
+        "category": "restroom",
+        "section": "104",
+        "waitTime": 2,
+        "status": "clear"
+      }
+    ]
+  },
+  "fifa_2026_002": {
+    "stadiumName": "SoFi Stadium",
+    "concessions": [
+      {
+        "id": "pizza_112",
+        "name": "Inglewood Pizza (Sec 112)",
+        "category": "food",
+        "section": "112",
+        "waitTime": 15,
+        "status": "moderate"
+      },
+      {
+        "id": "pizza_340",
+        "name": "Inglewood Pizza (Sec 340)",
+        "category": "food",
+        "section": "340",
+        "waitTime": 3,
+        "status": "clear"
+      },
+      {
+        "id": "tacos_120",
+        "name": "LA Street Tacos (Sec 120)",
+        "category": "food",
+        "section": "120",
+        "waitTime": 24,
+        "status": "busy"
+      },
+      {
+        "id": "restroom_106",
+        "name": "Restroom (Sec 106)",
+        "category": "restroom",
+        "section": "106",
+        "waitTime": 14,
+        "status": "moderate"
+      },
+      {
+        "id": "restroom_118",
+        "name": "Restroom (Sec 118)",
+        "category": "restroom",
+        "section": "118",
+        "waitTime": 2,
+        "status": "clear"
+      }
+    ]
+  }
+}

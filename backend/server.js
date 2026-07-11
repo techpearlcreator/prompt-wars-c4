@@ -8,6 +8,7 @@ const healthRouter = require('./routes/health');
 const chatRouter = require('./routes/chat');
 const analyticsRouter = require('./routes/analytics');
 const adminRouter = require('./routes/admin');
+const concessionsRouter = require('./routes/concessions');
 const { initWebsocket } = require('./services/websocketService');
 
 const app = express();
@@ -29,6 +30,7 @@ app.use('/health', healthRouter);
 app.use('/chat', chatRouter);
 app.use('/analytics', analyticsRouter);
 app.use('/admin', adminRouter);
+app.use('/concessions', concessionsRouter);
 
 // Undefined Routes
 app.use('*', (req, res, next) => {

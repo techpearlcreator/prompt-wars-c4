@@ -2,25 +2,19 @@ const { Anthropic } = require('@anthropic-ai/sdk');
 const { buildSystemPrompt } = require('../utils/systemPrompt');
 const { getCurrentMatchSummary } = require('./matchContextService');
 const { retrieveVenueContext } = require('./ragService');
+const { getQueueStatusSummary } = require('./commerceService');
 
 /**
- * Call the Claude API with the system prompt containing match context and stadium RAG details.
+ * Call the Claude API with the system prompt containing match, venue, and queue context.
  * Falls back to mock responses if CLAUDE_API_KEY is not set.
- * 
- * @param {string} userMessage - The query from the user.
- * @param {string} matchId - The active match ID.
- * @param {string} language - The user language preference.
- * @param {string} sentiment - The detected sentiment from query.
- * @returns {Promise<string>} The response from the LLM or mock fallback.
  */
 async function callClaudeAPI(userMessage, matchId = 'fifa_2026_001', language = 'English', sentiment = 'neutral') {
   const apiKey = process.env.CLAUDE_API_KEY;
   
-  // Retrieve score/lineups context
+  // Retrieve context blocks
   const matchContext = getCurrentMatchSummary(matchId);
-  
-  // Retrieve dynamic stadium wayfinding RAG context
   const venueContext = retrieveVenueContext(matchId, userMessage);
+  const queueContext = getQueueStatusSummary(matchId);
   
   // Build system prompt
   let systemPrompt = buildSystemPrompt(matchContext);
@@ -28,6 +22,11 @@ async function callClaudeAPI(userMessage, matchId = 'fifa_2026_001', language = 
   // Inject RAG context if found
   if (venueContext) {
     systemPrompt += `\n\n${venueContext}`;
+  }
+
+  // Inject Concessions Queue status
+  if (queueContext) {
+    systemPrompt += `\n\n${queueContext}`;
   }
 
   // Inject language instruction
@@ -132,7 +131,7 @@ const translations = {
 };
 
 /**
- * Smart mock responses with localization and sentiment adapter.
+ * Smart mock responses with localization, sentiment, wayfinding and queue prediction.
  */
 function generateMockResponse(query, matchId, language, sentiment) {
   const q = query.toLowerCase();
@@ -175,6 +174,24 @@ function generateMockResponse(query, matchId, language, sentiment) {
     prefix = "🎉 AMAZING! ";
   } else if (sentiment === 'disappointed') {
     prefix = "I understand the frustration. ";
+  }
+
+  // Smart Queue Predictions & Food recommendation queries
+  if (q.includes('wait') || q.includes('queue') || q.includes('busy') || q.includes('crowded') || q.includes('line')) {
+    if (q.includes('pizza') || q.includes('food') || q.includes('concession')) {
+      if (isArg) {
+        return "🍕 Nonnas Pizza (Sec 114) is currently congested with a 20-minute wait. I highly recommend Nonnas Pizza (Sec 324) which is clear with only a 4-minute wait!";
+      } else {
+        return "🍕 Inglewood Pizza (Sec 112) has a moderate 15-minute wait, but the stand at Section 340 is practically empty with only a 3-minute wait!";
+      }
+    }
+    if (q.includes('restroom') || q.includes('toilet') || q.includes('bathroom') || q.includes('wc')) {
+      if (isArg) {
+        return "🚻 Restroom (Sec 112) has an 18-minute wait due to high crowd density. I recommend taking a short walk to Restroom (Sec 104) where the wait is only 2 minutes!";
+      } else {
+        return "🚻 Restroom (Sec 106) has a 14-minute wait, but you can head to Restroom (Sec 118) which is currently clear with a 2-minute wait!";
+      }
+    }
   }
 
   // Wayfinding queries: Restrooms

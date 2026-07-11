@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import ChatWindow from '../components/ChatWindow';
 import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import translations from '../i18n';
-import { Trophy, MapPin, Users, Flame, Info, BarChart2, Globe, Calendar, BellRing } from 'lucide-react';
+import { fetchConcessionsQueue } from '../services/api';
+import { Trophy, MapPin, Users, Flame, Info, BarChart2, Globe, Calendar, BellRing, Clock } from 'lucide-react';
 import { io } from 'socket.io-client';
 
 export default function App() {
@@ -16,12 +17,14 @@ export default function App() {
   const [customEvents, setCustomEvents] = useState([]);
   const [toast, setToast] = useState(null);
 
+  // Concessions Queue status
+  const [concessions, setConcessions] = useState([]);
+
   const t = translations[language] || translations['English'];
   const isArgMatch = matchId === 'fifa_2026_001';
 
   // 1. Establish WebSocket Connection & Room Joiner
   useEffect(() => {
-    // Reset live overrides when matchId changes
     setLiveScore(null);
     setLiveMinute(null);
     setCustomEvents([]);
@@ -36,19 +39,15 @@ export default function App() {
       socket.emit('join_match', matchId);
     });
 
-    // Handle live pushed event
     socket.on('match_event', (event) => {
       console.log('Live Match Event Received:', event);
       
-      // Update states
       setLiveScore(event.liveScore);
       setLiveMinute(event.liveMinute);
       setCustomEvents((prev) => [event, ...prev]);
       
-      // Trigger toast alert
       setToast(event);
 
-      // Auto-hide toast after 6 seconds
       const timer = setTimeout(() => {
         setToast(null);
       }, 6000);
@@ -59,6 +58,19 @@ export default function App() {
     return () => {
       socket.disconnect();
     };
+  }, [matchId]);
+
+  // 2. Fetch Concessions Queue data on matchId changes
+  useEffect(() => {
+    const loadConcessions = async () => {
+      try {
+        const data = await fetchConcessionsQueue(matchId);
+        setConcessions(data.concessions || []);
+      } catch (err) {
+        console.warn("Failed to load concessions database.");
+      }
+    };
+    loadConcessions();
   }, [matchId]);
 
   return (
@@ -157,7 +169,7 @@ export default function App() {
         {/* Desktop Side Stats Panel */}
         <section 
           aria-label="Live Match Status" 
-          className="hidden md:flex flex-col w-80 shrink-0 bg-stadium-navy-card rounded-3xl border border-stadium-navy-light/60 p-5 space-y-6 overflow-y-auto custom-scrollbar"
+          className="hidden md:flex flex-col w-80 shrink-0 bg-stadium-navy-card rounded-3xl border border-stadium-navy-light/60 p-5 space-y-5 overflow-y-auto custom-scrollbar"
         >
           {/* Header */}
           <div>
@@ -168,7 +180,7 @@ export default function App() {
           </div>
 
           {/* Match Score Card */}
-          <div className="bg-stadium-navy-deep border border-stadium-navy-light/80 rounded-2xl p-4 flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
+          <div className="bg-stadium-navy-deep border border-stadium-navy-light/80 rounded-2xl p-4 flex flex-col items-center justify-center relative overflow-hidden shadow-inner shrink-0">
             <div className="flex items-center justify-between w-full text-xs font-bold text-slate-400 px-2 mb-2">
               <span>{isArgMatch ? 'ARG' : 'FRA'}</span>
               <span className="px-2 py-0.5 rounded bg-stadium-gold/10 text-stadium-gold animate-pulse text-[10px]">
@@ -193,6 +205,38 @@ export default function App() {
             </div>
           </div>
 
+          {/* Live Queue Board (Phase 8 Widget) */}
+          <div className="space-y-2.5 shrink-0">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center">
+              <Clock className="w-3.5 h-3.5 text-stadium-gold mr-1.5" /> Live Queue Board
+            </h3>
+            
+            <div className="bg-stadium-navy-deep/45 border border-stadium-navy-light/40 rounded-2xl p-3.5 space-y-2.5 shadow-md">
+              {concessions.map((item) => {
+                const isBusy = item.status === 'busy';
+                const isMod = item.status === 'moderate';
+                
+                return (
+                  <div key={item.id} className="flex justify-between items-center text-xs">
+                    <span className="text-slate-300 font-medium truncate max-w-[170px]" title={item.name}>
+                      {item.name}
+                    </span>
+                    <span className="flex items-center space-x-1.5 shrink-0">
+                      <span className={`w-2 h-2 rounded-full ${
+                        isBusy ? 'bg-red-500' : isMod ? 'bg-amber-500' : 'bg-green-500'
+                      }`}></span>
+                      <span className={`font-bold ${
+                        isBusy ? 'text-red-400' : isMod ? 'text-amber-400' : 'text-green-400'
+                      }`}>
+                        {item.waitTime}m
+                      </span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Event Feed */}
           <div className="space-y-3">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center">
@@ -200,7 +244,6 @@ export default function App() {
             </h3>
             
             <div className="space-y-3 border-l border-stadium-navy-light/60 ml-2 pl-3 py-1">
-              {/* Prepend any dynamically pushed WebSocket events */}
               {customEvents.map((evt, index) => (
                 <div key={`custom-${index}`} className="relative text-xs animate-in slide-in-from-left duration-300">
                   <span className="absolute left-[-17px] top-1.5 w-2.5 h-2.5 rounded-full bg-stadium-gold ring-4 ring-stadium-navy-card"></span>

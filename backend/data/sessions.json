@@ -25,11 +25,23 @@
           "text": "🚻 Restrooms at MetLife Stadium are fully accessible. Family toilets are in Section 104, 117, 128, and 143. C-Gate toilets are right adjacent to Section 112 and 114.",
           "sender": "ai",
           "timestamp": 1783773528551
+        },
+        {
+          "id": "msg_1783774171634_cho1v",
+          "text": "Is Section 112 restroom crowded?",
+          "sender": "user",
+          "timestamp": 1783774171634
+        },
+        {
+          "id": "msg_1783774171643_2em2r",
+          "text": "🚻 Restroom (Sec 112) has an 18-minute wait due to high crowd density. I recommend taking a short walk to Restroom (Sec 104) where the wait is only 2 minutes!",
+          "sender": "ai",
+          "timestamp": 1783774171643
         }
       ],
       "createdAt": 1783767473247,
       "matchId": "fifa_2026_001",
-      "lastActivity": 1783773528551
+      "lastActivity": 1783774171643
     },
     "usr_1783767425736_dtx06i1zz": {
       "messages": [
@@ -44,11 +56,35 @@
           "text": "Argentina is leading Australia 2-1 in the 67th minute here at MetLife Stadium.",
           "sender": "ai",
           "timestamp": 1783767644663
+        },
+        {
+          "id": "msg_1783773578378_y3k51",
+          "text": "Where is the nearest restroom from Gate C?",
+          "sender": "user",
+          "timestamp": 1783773578378
+        },
+        {
+          "id": "msg_1783773578385_yi8i9",
+          "text": "🚻 Restrooms at MetLife Stadium are fully accessible. Family toilets are in Section 104, 117, 128, and 143. C-Gate toilets are right adjacent to Section 112 and 114.",
+          "sender": "ai",
+          "timestamp": 1783773578385
+        },
+        {
+          "id": "msg_1783773628901_onib8",
+          "text": "restroom near Gate B",
+          "sender": "user",
+          "timestamp": 1783773628901
+        },
+        {
+          "id": "msg_1783773628909_3n2q1",
+          "text": "🚻 Restrooms at MetLife Stadium are fully accessible. Family toilets are in Section 104, 117, 128, and 143. C-Gate toilets are right adjacent to Section 112 and 114.",
+          "sender": "ai",
+          "timestamp": 1783773628909
         }
       ],
       "createdAt": 1783767644654,
       "matchId": "fifa_2026_001",
-      "lastActivity": 1783767644663
+      "lastActivity": 1783773628909
     }
   },
   "feedback": {

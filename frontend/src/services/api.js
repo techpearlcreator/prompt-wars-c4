@@ -76,3 +76,17 @@ export async function fetchAnalytics() {
     throw error;
   }
 }
+
+/**
+ * Fetch live concessions queues and wait times.
+ */
+export async function fetchConcessionsQueue(matchId) {
+  try {
+    const response = await fetch(`/api/concessions/${matchId}`);
+    if (!response.ok) throw new Error("Failed to fetch live wait times.");
+    return await response.json();
+  } catch (error) {
+    console.error("Concessions Fetch Error:", error.message);
+    throw error;
+  }
+}
