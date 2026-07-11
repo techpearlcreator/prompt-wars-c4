@@ -136,3 +136,35 @@ export async function fetchReconnectionLogs(matchId) {
     throw error;
   }
 }
+
+/**
+ * Submit a concession order.
+ */
+export async function submitConcessionOrder(order) {
+  try {
+    const response = await fetch('/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(order)
+    });
+    if (!response.ok) throw new Error("Failed to submit concession order.");
+    return await response.json();
+  } catch (error) {
+    console.error("Submit Concession Order Error:", error.message);
+    throw error;
+  }
+}
+
+/**
+ * Fetch concessions orders for a match.
+ */
+export async function fetchOrders(matchId) {
+  try {
+    const response = await fetch(`/api/orders/${matchId}`);
+    if (!response.ok) throw new Error("Failed to fetch concessions orders.");
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch Orders Error:", error.message);
+    throw error;
+  }
+}
