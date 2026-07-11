@@ -435,7 +435,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                       })}
                     </div>
 
-                    {hasAnswered && triviaAns && msg.options && (
+                    {triviaAns && msg.options && (
                       <p className={`text-[10px] font-bold ${triviaAns.isCorrect ? 'text-green-400 animate-pulse' : 'text-red-400'}`}>
                         {triviaAns.isCorrect 
                           ? "🎉 Correct! +10 points added to your score." 
