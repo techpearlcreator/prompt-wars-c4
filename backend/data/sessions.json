@@ -176,11 +176,23 @@
           "text": "🚗 MetLife Stadium Transit & Rideshare Options:\n- Lyft: $38.00 (1.6x surge multiplier) | 15 min wait time | Lot D (Zone B).\n- Uber: $45.00 (1.8x surge multiplier) | 18 min wait time | Lot E (Zone A).\n- NJ Transit Train (Meadowlands Station): Trains depart every 10 minutes, currently ON TIME. Cost: $10.50.\n- Shuttles: 8 min wait.\n💡 Recommendation: Lyft is currently $7 cheaper than Uber with a shorter line. For a completely surge-free option, the NJ Transit train is highly recommended.",
           "sender": "ai",
           "timestamp": 1783782138294
+        },
+        {
+          "id": "msg_1783786414237_l5doc",
+          "text": "show me the map for section 112",
+          "sender": "user",
+          "timestamp": 1783786414237
+        },
+        {
+          "id": "msg_1783786414246_rkqlr",
+          "text": "Here is the interactive seating map and wayfinding route from Section 112 to the nearest restroom:\n[STADIUM_MAP: MetLife Stadium, section: 112, target: restroom, eta: 1 min, distance: 25m]",
+          "sender": "ai",
+          "timestamp": 1783786414246
         }
       ],
       "createdAt": 1783767644654,
       "matchId": "fifa_2026_001",
-      "lastActivity": 1783782138294
+      "lastActivity": 1783786414246
     }
   },
   "feedback": {

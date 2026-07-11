@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
-import { Sparkles, User, ThumbsUp, ThumbsDown, Receipt, ShoppingBag, Trophy, Check, X } from 'lucide-react';
+import { Sparkles, User, ThumbsUp, ThumbsDown, Receipt, ShoppingBag, Trophy, Check, X, MapPin } from 'lucide-react';
 import TypingIndicator from './TypingIndicator';
 import { sendMessageFeedback, submitTriviaAnswer } from '../services/api';
 
