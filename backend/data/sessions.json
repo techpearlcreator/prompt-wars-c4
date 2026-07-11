@@ -13,11 +13,23 @@
           "text": "Francia lidera actualmente a Marruecos 1-0 en el minuto 43 en el SoFi Stadium.",
           "sender": "ai",
           "timestamp": 1783767473252
+        },
+        {
+          "id": "msg_1783773528547_mrd7q",
+          "text": "Where is the nearest restroom from Gate C?",
+          "sender": "user",
+          "timestamp": 1783773528547
+        },
+        {
+          "id": "msg_1783773528551_8kpql",
+          "text": "🚻 Restrooms at MetLife Stadium are fully accessible. Family toilets are in Section 104, 117, 128, and 143. C-Gate toilets are right adjacent to Section 112 and 114.",
+          "sender": "ai",
+          "timestamp": 1783773528551
         }
       ],
       "createdAt": 1783767473247,
-      "matchId": "fifa_2026_002",
-      "lastActivity": 1783767473252
+      "matchId": "fifa_2026_001",
+      "lastActivity": 1783773528551
     },
     "usr_1783767425736_dtx06i1zz": {
       "messages": [

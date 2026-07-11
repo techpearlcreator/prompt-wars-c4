@@ -5,7 +5,7 @@ import { sendMessageFeedback } from '../services/api';
 
 /**
  * MessageList Component
- * Displays the scrollable message thread with inline feedback loops.
+ * Displays the scrollable message thread with inline feedback loops and RAG wayfinding decorators.
  */
 export default function MessageList({ messages, isTyping, ratingThanksText }) {
   const containerRef = useRef(null);
@@ -22,9 +22,8 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
   }, [messages, isTyping]);
 
   const handleRate = async (messageId, rating) => {
-    if (ratedMessages[messageId]) return; // Block double rating
+    if (ratedMessages[messageId]) return;
     
-    // Optimistic UI update
     setRatedMessages(prev => ({
       ...prev,
       [messageId]: rating
@@ -35,6 +34,46 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
     } catch (err) {
       console.error("Failed to submit message feedback", err);
     }
+  };
+
+  /**
+   * Parses text and renders custom inline badges for wayfinding emojis.
+   */
+  const renderMessageContent = (text) => {
+    if (typeof text !== 'string') return text;
+
+    const parts = text.split(/(🚻|🛗|🚧|🍕)/g);
+    return parts.map((part, idx) => {
+      if (part === '🚻') {
+        return (
+          <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-300 border border-blue-500/20 text-[10px] font-bold mx-1 select-none">
+            🚻 Restroom
+          </span>
+        );
+      }
+      if (part === '🛗') {
+        return (
+          <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-[10px] font-bold mx-1 select-none">
+            🛗 Elevator
+          </span>
+        );
+      }
+      if (part === '🚧') {
+        return (
+          <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 text-[10px] font-bold mx-1 select-none">
+            🚧 Gate
+          </span>
+        );
+      }
+      if (part === '🍕') {
+        return (
+          <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-300 border border-orange-500/20 text-[10px] font-bold mx-1 select-none">
+            🍕 Food Zone
+          </span>
+        );
+      }
+      return part;
+    });
   };
 
   return (
@@ -55,10 +94,10 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
           </div>
           <div className="flex flex-wrap gap-2 justify-center max-w-md pt-2">
             {[
-              "What formation is Argentina using today?",
-              "Who is playing #10?",
-              "Explain offside rules",
-              "Who scored for France?"
+              "Where is the nearest restroom from Gate C?",
+              "Closest elevator to Section 112?",
+              "What formation is Argentina using?",
+              "Where can I buy pizza?"
             ].map((hint, idx) => (
               <div 
                 key={idx}
@@ -105,7 +144,9 @@ export default function MessageList({ messages, isTyping, ratingThanksText }) {
                       : 'bg-stadium-navy-bubble border-stadium-navy-light/40 text-slate-100 rounded-tl-none'
                   }`}
                 >
-                  <p className="text-sm md:text-base leading-relaxed whitespace-pre-line">{msg.text}</p>
+                  <div className="text-sm md:text-base leading-relaxed whitespace-pre-line">
+                    {renderMessageContent(msg.text)}
+                  </div>
                 </div>
                 
                 {/* Timestamp and Feedback loop for AI messages */}

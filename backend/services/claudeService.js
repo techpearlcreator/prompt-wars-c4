@@ -1,9 +1,10 @@
 const { Anthropic } = require('@anthropic-ai/sdk');
 const { buildSystemPrompt } = require('../utils/systemPrompt');
-const { getCurrentMatchSummary, getMatchById } = require('./matchContextService');
+const { getCurrentMatchSummary } = require('./matchContextService');
+const { retrieveVenueContext } = require('./ragService');
 
 /**
- * Call the Claude API with the system prompt containing match context.
+ * Call the Claude API with the system prompt containing match context and stadium RAG details.
  * Falls back to mock responses if CLAUDE_API_KEY is not set.
  * 
  * @param {string} userMessage - The query from the user.
@@ -14,8 +15,20 @@ const { getCurrentMatchSummary, getMatchById } = require('./matchContextService'
  */
 async function callClaudeAPI(userMessage, matchId = 'fifa_2026_001', language = 'English', sentiment = 'neutral') {
   const apiKey = process.env.CLAUDE_API_KEY;
+  
+  // Retrieve score/lineups context
   const matchContext = getCurrentMatchSummary(matchId);
+  
+  // Retrieve dynamic stadium wayfinding RAG context
+  const venueContext = retrieveVenueContext(matchId, userMessage);
+  
+  // Build system prompt
   let systemPrompt = buildSystemPrompt(matchContext);
+  
+  // Inject RAG context if found
+  if (venueContext) {
+    systemPrompt += `\n\n${venueContext}`;
+  }
 
   // Inject language instruction
   systemPrompt += `\n\nCRITICAL: You must respond in the following language: ${language}.`;
@@ -65,7 +78,11 @@ const translations = {
     mbappe: "Kylian Mbappé es el extremo izquierdo estrella de Francia (#10). ¡Marcó en el minuto 5 de tiro de rebote!",
     var: "El VAR revisa goles, penaltis, tarjetas rojas directas y errores de identidad. En este partido se utilizó para verificar jugadas clave.",
     formationArg: "Argentina juega con una formación 4-2-3-1, con Messi en el centro ofensivo y Alvarez como delantero.",
-    formationFra: "Francia juega con una formación 4-3-3, con Mbappe, Giroud y Dembele en la delantera."
+    formationFra: "Francia juega con una formación 4-3-3, con Mbappe, Giroud y Dembele en la delantera.",
+    restroomsMetLife: "Los baños accesibles en MetLife Stadium están en las secciones 104, 117, 128, 143. Cerca de la Puerta C, hay baños al lado de las secciones 112 y 114.",
+    restroomsSoFi: "Los baños accesibles en SoFi Stadium están en las secciones 102, 118, 203, 219. Cerca del YouTube Theater, están al lado de las secciones 106 y 108.",
+    elevatorsMetLife: "Los ascensores en MetLife Stadium están en el vestíbulo oeste (sección 112), vestíbulo este (sección 134) y la puerta Pepsi (sección 124).",
+    elevatorsSoFi: "Los ascensores en SoFi Stadium están en el vestíbulo VIP (sección 104), entrada norte (sección 122) y entrada sur (sección 140)."
   },
   Hindi: {
     redirect: "मैं एक फीफा स्टेडियम सहायक हूं। कृपया मैच के नियमों, स्कोर या लाइनअप के बारे में पूछें!",
@@ -76,7 +93,11 @@ const translations = {
     mbappe: "काइलियन एम्बाप्पे फ्रांस के स्टार #10 विंगर हैं। उन्होंने मैच के 5वें मिनट में रिबाउंड गोल किया था!",
     var: "वीएआर गोल, पेनल्टी, सीधे लाल कार्ड और गलत पहचान के फैसलों की समीक्षा करता है।",
     formationArg: "अर्जेंटीना 4-2-3-1 फॉर्मेशन का उपयोग कर रहा है, जिसमें मेसी केंद्रीय भूमिका में हैं।",
-    formationFra: "फ्रांस 4-3-3 फॉर्मेशन का उपयोग कर रहा है, जिसमें एम्बाप्पे, गिरौद और डेम्बेले आगे हैं।"
+    formationFra: "फ्रांस 4-3-3 फॉर्मेशन का उपयोग कर रहा है, जिसमें एम्बाप्पे, गिरौद और डेम्बेले आगे हैं।",
+    restroomsMetLife: "मेटलाइफ स्टेडियम में सुलभ शौचालय धारा 104, 117, 128, 143 में हैं। गेट सी के पास, धारा 112 और 114 के बगल में शौचालय हैं।",
+    restroomsSoFi: "सोफी स्टेडियम में सुलभ शौचालय धारा 102, 118, 203, 219 में हैं। धारा 106 और 108 के बगल में भी शौचालय हैं।",
+    elevatorsMetLife: "मेटलाइफ स्टेडियम में लिफ्ट पश्चिम लॉबी (धारा 112), पूर्वी लॉबी (धारा 134) और पेप्सी गेट (धारा 124) पर हैं।",
+    elevatorsSoFi: "सोफी स्टेडियम में लिफ्ट वीआईपी लॉबी (धारा 104), उत्तरी प्रवेश द्वार (धारा 122) और दक्षिणी प्रवेश द्वार (धारा 140) पर हैं।"
   },
   Arabic: {
     redirect: "أنا مساعد عمليات ملعب الفيفا. يرجى الاستفسار عن القواعد والتشكيلات والنتائج!",
@@ -87,7 +108,11 @@ const translations = {
     mbappe: "كيليان مبابي هو الجناح الأيسر لفرنسا (#10). سجل هدفاً في الدقيقة 5!",
     var: "يراجع حكم الفيديو المساعد (VAR) الأهداف، ركلات الجزاء، البطاقات الحمراء المباشرة وتحديد الهوية الخطأ.",
     formationArg: "تلعب الأرجنتين بخطة 4-2-3-1 مع ميسي في خط الوسط الهجومي.",
-    formationFra: "تلعب فرنسا بخطة 4-3-3 مع مبابي وجيرو وديمبيلي في الهجوم."
+    formationFra: "تلعب فرنسا بخطة 4-3-3 مع مبابي وجيرو وديمبيلي في الهجوم.",
+    restroomsMetLife: "تتوفر دورات المياه المخصصة لذوي الاحتياجات الخاصة في ملعب ميتلايف في الأقسام 104، 117، 128، 143. بالقرب من البوابة C، توجد دورات مياه بجوار القسمين 112 و114.",
+    restroomsSoFi: "تتوفر دورات المياه المخصصة في ملعب سوفي في الأقسام 102، 118، 203، 219. وبجوار القسمين 106 و108.",
+    elevatorsMetLife: "توجد المصاعد في ملعب ميتلايف في الردهة الغربية (القسم 112)، الردهة الشرقية (القسم 134) وبوابة بيبسي (القسم 124).",
+    elevatorsSoFi: "توجد المصاعد في ملعب سوفي في ردهة VIP (القسم 104)، المدخل الشمالي (القسم 122) والمدخل الجنوبي (القسم 140)."
   },
   Mandarin: {
     redirect: "我是国际足联球场运营助手。请咨询关于规则、阵容或比分的问题！",
@@ -98,7 +123,11 @@ const translations = {
     mbappe: "基利安·姆巴佩是法国队的明星左翼（10号）。他在第5分钟补射破门！",
     var: "VAR审查进球、点球、直接红牌和判罚对象错误。本场比赛已用于检查关键判罚。",
     formationArg: "阿根廷今天采用4-2-3-1阵型，梅西担任前腰，梅西后面是阿尔瓦雷斯。",
-    formationFra: "法国今天采用4-3-3阵型，由姆巴佩、吉鲁和登贝莱领衔锋线。"
+    formationFra: "法国今天采用4-3-3阵型，由姆巴佩、吉鲁和登贝莱领衔锋线。",
+    restroomsMetLife: "MetLife体育场的无障碍洗手间位于104、117、128、143区。C门（110-115区）附近，洗手间就在112区和114区旁边。",
+    restroomsSoFi: "SoFi体育场的无障碍洗手间位于102、118、203、219区。在YouTube剧院门附近，洗手间在106区和108区旁边。",
+    elevatorsMetLife: "MetLife体育场的电梯位于西大厅（112区旁）、东大厅（134区旁）和百事门（124区旁）。",
+    elevatorsSoFi: "SoFi体育场的电梯位于VIP大厅（104区旁）、北入口（122区旁）和南入口（140区旁）。"
   }
 };
 
@@ -128,6 +157,12 @@ function generateMockResponse(query, matchId, language, sentiment) {
     if (q.includes('formation')) {
       return dict[isArg ? 'formationArg' : 'formationFra'];
     }
+    if (q.includes('restroom') || q.includes('toilet') || q.includes('bathroom') || q.includes('wc')) {
+      return dict[isArg ? 'restroomsMetLife' : 'restroomsSoFi'];
+    }
+    if (q.includes('elevator') || q.includes('lift')) {
+      return dict[isArg ? 'elevatorsMetLife' : 'elevatorsSoFi'];
+    }
     if (q.includes('pizza') || q.includes('weather') || q.includes('code')) {
       return dict.redirect;
     }
@@ -140,6 +175,42 @@ function generateMockResponse(query, matchId, language, sentiment) {
     prefix = "🎉 AMAZING! ";
   } else if (sentiment === 'disappointed') {
     prefix = "I understand the frustration. ";
+  }
+
+  // Wayfinding queries: Restrooms
+  if (q.includes('restroom') || q.includes('toilet') || q.includes('bathroom') || q.includes('wc')) {
+    if (isArg) {
+      return "🚻 Restrooms at MetLife Stadium are fully accessible. Family toilets are in Section 104, 117, 128, and 143. C-Gate toilets are right adjacent to Section 112 and 114.";
+    } else {
+      return "🚻 SoFi Stadium offers accessible restrooms and family toilets in Sections 102, 118, 203, and 219. Restrooms near YouTube Theater entry are next to Section 106 and 108.";
+    }
+  }
+
+  // Wayfinding queries: Elevators
+  if (q.includes('elevator') || q.includes('lift') || q.includes('escalator')) {
+    if (isArg) {
+      return "🛗 MetLife Passenger elevators are in the West Lobby (near Section 112), East Lobby (Section 134), and Pepsi Gate (Section 124).";
+    } else {
+      return "🛗 SoFi Stadium elevators are at the VIP Lobby (Section 104), North Entry (Section 122), and South Entry (Section 140).";
+    }
+  }
+
+  // Wayfinding queries: Gates
+  if (q.includes('gate') || q.includes('entrance') || q.includes('exit')) {
+    if (isArg) {
+      return "🚧 MetLife Stadium main gates: MetLife (North/East), Verizon (East), Pepsi (South/East), Bud Light (West), and SAP (North/West). Entry opens 2 hours before kickoff.";
+    } else {
+      return "🚧 SoFi Stadium has entry Gates 1A through 12. Main entrances are on the South and North sides. Clear bag policies are enforced.";
+    }
+  }
+
+  // Wayfinding queries: Food/Pizza
+  if (q.includes('food') || q.includes('pizza') || q.includes('burger')) {
+    if (isArg) {
+      return "🍕 'Nonnas Pizza' is at Section 114 and 324. Hot dogs and burgers are available at concessions in Sections 108, 126, 212, and 338.";
+    } else {
+      return "🍕 Inglewood Pizza is sold at Section 112 and 340. LA Street Food stands are located at Sections 120, 222, and 318.";
+    }
   }
 
   // Question: VAR
@@ -175,15 +246,6 @@ function generateMockResponse(query, matchId, language, sentiment) {
       return prefix + "Argentina is using a 4-2-3-1 formation with Messi as CAM, while Australia is lining up in a 4-4-2 block.";
     } else {
       return prefix + "France is using a 4-3-3 attack formation, while Morocco is structured in a defensive 4-1-4-1 setup.";
-    }
-  }
-  
-  // Question: Disallowed goal / Offside
-  if (q.includes('called back') || q.includes('disallowed') || q.includes('offside')) {
-    if (isArg) {
-      return prefix + "There were no called back goals in the Argentina match. Alvarez's 34' goal was checked by VAR and confirmed.";
-    } else {
-      return prefix + "There are no disallowed goals. Mbappe scored a clean goal at minute 5 to give France the lead.";
     }
   }
 

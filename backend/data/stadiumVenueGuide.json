@@ -1,0 +1,82 @@
+{
+  "fifa_2026_001": {
+    "stadiumName": "MetLife Stadium",
+    "sections": [
+      {
+        "id": "restrooms_main",
+        "category": "restroom",
+        "keywords": ["restroom", "toilet", "washroom", "bathroom", "wc", "disabled restroom", "accessible"],
+        "title": "Accessible Restroom Directory (MetLife Stadium)",
+        "content": "All restrooms at MetLife Stadium are wheelchair accessible. Family/Gender-Neutral toilets are located in Section 104, 117, 128, 143, 204, 224, 304, and 328. The closest accessible restrooms to Gate C (Sections 110-115) are located right next to Section 112 and Section 114."
+      },
+      {
+        "id": "elevators_main",
+        "category": "elevator",
+        "keywords": ["elevator", "lift", "wheelchair access", "escalator", "stairs", "ramp"],
+        "title": "Elevator and Escalator Guide (MetLife Stadium)",
+        "content": "Passenger elevators are situated at the West Lobby (near Section 112), East Lobby (near Section 134), and adjacent to the Pepsi Gate (Section 124). Ramps to the upper levels are located on the North side (near Section 102) and South side (near Section 146)."
+      },
+      {
+        "id": "gates_main",
+        "category": "gate",
+        "keywords": ["gate", "entrance", "exit", "ticket scan", "parking lot", "shuttle"],
+        "title": "Gate & Egress Operations (MetLife Stadium)",
+        "content": "MetLife Stadium has five main gates: MetLife Gate (North/East), Verizon Gate (East), Pepsi Gate (South/East), Bud Light Gate (West), and SAP Gate (North/West). Entry gates open 2 hours prior to kickoff. Ticket scanning is available at all gates."
+      },
+      {
+        "id": "medical_firstaid",
+        "category": "medical",
+        "keywords": ["medical", "first aid", "doctor", "injury", "emergency", "paramedic", "hospital"],
+        "title": "Medical Stations (MetLife Stadium)",
+        "content": "First Aid stations are staffed by medical personnel and located at Section 103, Section 128, Section 201, Section 228, Section 301, and Section 328. Automated External Defibrillators (AEDs) are distributed at guest service booths on every level."
+      },
+      {
+        "id": "concessions_food",
+        "category": "food",
+        "keywords": ["food", "concession", "beer", "drink", "pizza", "burger", "hot dog", "vegan", "halal", "kosher"],
+        "title": "Food & Beverage Concession Guide (MetLife Stadium)",
+        "content": "Premium pizza is located at 'Nonnas Pizza' at Section 114 and Section 324. Hot dogs and burgers are available at standard concessions (Sections 108, 126, 212, and 338). Vegan wraps can be found at 'Green Field Concessions' near Section 142."
+      }
+    ]
+  },
+  "fifa_2026_002": {
+    "stadiumName": "SoFi Stadium",
+    "sections": [
+      {
+        "id": "restrooms_main",
+        "category": "restroom",
+        "keywords": ["restroom", "toilet", "washroom", "bathroom", "wc", "disabled restroom", "accessible"],
+        "title": "Accessible Restroom Directory (SoFi Stadium)",
+        "content": "SoFi Stadium offers all-gender restrooms and accessible family toilets in Sections 102, 118, 203, 219, 310, 342, and 405. The closest accessible restrooms near the YouTube Theater gate are located next to Section 106 and Section 108."
+      },
+      {
+        "id": "elevators_main",
+        "category": "elevator",
+        "keywords": ["elevator", "lift", "wheelchair access", "escalator", "stairs", "ramp"],
+        "title": "Elevator and Escalator Guide (SoFi Stadium)",
+        "content": "Primary elevators are located at the VIP Lobby (Section 104), North Entry (Section 122), and South Entry (Section 140). A massive outdoor canopy escalator connects the plaza level to Level 6 near Section 224."
+      },
+      {
+        "id": "gates_main",
+        "category": "gate",
+        "keywords": ["gate", "entrance", "exit", "ticket scan", "parking lot", "shuttle"],
+        "title": "Gate & Egress Operations (SoFi Stadium)",
+        "content": "SoFi Stadium entry occurs via Gates 1A through 12. Main entrances are situated on the South side (near Century Blvd) and North side (near Hollywood Park). Clear bag policies are strictly enforced at all gate checkpoints."
+      },
+      {
+        "id": "medical_firstaid",
+        "category": "medical",
+        "keywords": ["medical", "first aid", "doctor", "injury", "emergency", "paramedic", "hospital"],
+        "title": "Medical Stations (SoFi Stadium)",
+        "content": "First Aid rooms are staffed by emergency technicians and are found on Level 2 (Section 120), Level 4 (Section 220), Level 6 (Section 312), and Level 8 (Section 410)."
+      },
+      {
+        "id": "concessions_food",
+        "category": "food",
+        "keywords": ["food", "concession", "beer", "drink", "pizza", "burger", "hot dog", "vegan", "halal", "kosher"],
+        "title": "Food & Beverage Concession Guide (SoFi Stadium)",
+        "content": "LA Street Food concessions (tacos, burgers) are located at Section 120, 222, and 318. Organic pizza slices are sold at 'Inglewood Pizza' near Section 112 and Section 340. Halal-certified snacks are available at the Section 102 market kiosk."
+      }
+    ]
+  }
+}
