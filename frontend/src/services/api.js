@@ -90,3 +90,35 @@ export async function fetchConcessionsQueue(matchId) {
     throw error;
   }
 }
+
+/**
+ * Submit a stadium incident safety report.
+ */
+export async function submitIncidentReport(report) {
+  try {
+    const response = await fetch('/api/incidents', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(report)
+    });
+    if (!response.ok) throw new Error("Failed to submit incident report.");
+    return await response.json();
+  } catch (error) {
+    console.error("Submit Incident Error:", error.message);
+    throw error;
+  }
+}
+
+/**
+ * Fetch reported incidents for a match.
+ */
+export async function fetchIncidents(matchId) {
+  try {
+    const response = await fetch(`/api/incidents/${matchId}`);
+    if (!response.ok) throw new Error("Failed to fetch match incident logs.");
+    return await response.json();
+  } catch (error) {
+    console.error("Fetch Incidents Error:", error.message);
+    throw error;
+  }
+}

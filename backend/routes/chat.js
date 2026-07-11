@@ -3,6 +3,7 @@ const router = express.Router();
 const { callClaudeAPI } = require('../services/claudeService');
 const { saveMessage, saveFeedback, loadSessionHistory } = require('../services/sessionService');
 const { analyzeSentiment } = require('../utils/sentimentAnalysis');
+const { logIncident } = require('../services/incidentService');
 
 /**
  * @route POST /chat
@@ -20,13 +21,41 @@ router.post('/', async (req, res, next) => {
     const sentiment = analyzeSentiment(message);
     console.log(`User query sentiment: ${sentiment} for message: "${message}"`);
 
-    // 2. Save user message to database
+    // 2. Scan for safety keywords to auto-log incidents
+    const emergencyKeywords = ['emergency', 'medical help', 'injured', 'lost child', 'fight', 'security help', 'fire', 'sos', 'heart attack', 'bleeding'];
+    const lowerMessage = message.toLowerCase();
+    const isEmergency = emergencyKeywords.some(keyword => lowerMessage.includes(keyword));
+    
+    if (isEmergency) {
+      const sectionMatch = lowerMessage.match(/(?:sec|section)\s*(\d+)/i);
+      const section = sectionMatch ? sectionMatch[1] : "Unknown";
+      
+      let type = "general_safety";
+      if (lowerMessage.includes('medical') || lowerMessage.includes('injured') || lowerMessage.includes('heart') || lowerMessage.includes('bleeding')) {
+        type = "medical";
+      } else if (lowerMessage.includes('fight') || lowerMessage.includes('security') || lowerMessage.includes('stole')) {
+        type = "security";
+      } else if (lowerMessage.includes('child') || lowerMessage.includes('lost') || lowerMessage.includes('missing')) {
+        type = "lost_person";
+      } else if (lowerMessage.includes('fire') || lowerMessage.includes('hazard') || lowerMessage.includes('spill')) {
+        type = "hazard";
+      }
+
+      logIncident({
+        matchId,
+        type,
+        section,
+        details: `Auto-logged via chat assistant: "${message}"`
+      });
+    }
+
+    // 3. Save user message to database
     saveMessage(userId, message, 'user', matchId);
 
-    // 3. Call Claude API with matchId, language, and sentiment parameters
+    // 4. Call Claude API with matchId, language, and sentiment parameters
     const aiResponse = await callClaudeAPI(message, matchId, language, sentiment);
     
-    // 4. Save AI response to database
+    // 5. Save AI response to database
     const savedAiMsg = saveMessage(userId, aiResponse, 'ai', matchId);
 
     return res.status(200).json({

@@ -410,7 +410,7 @@ export default function App() {
 
       {/* Analytics Dashboard modal */}
       {showDashboard && (
-        <AnalyticsDashboard onClose={() => setShowDashboard(false)} t={t} />
+        <AnalyticsDashboard onClose={() => setShowDashboard(false)} t={t} matchId={matchId} />
       )}
     </main>
   );

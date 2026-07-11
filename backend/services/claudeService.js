@@ -11,28 +11,22 @@ const { getQueueStatusSummary } = require('./commerceService');
 async function callClaudeAPI(userMessage, matchId = 'fifa_2026_001', language = 'English', sentiment = 'neutral') {
   const apiKey = process.env.CLAUDE_API_KEY;
   
-  // Retrieve context blocks
   const matchContext = getCurrentMatchSummary(matchId);
   const venueContext = retrieveVenueContext(matchId, userMessage);
   const queueContext = getQueueStatusSummary(matchId);
   
-  // Build system prompt
   let systemPrompt = buildSystemPrompt(matchContext);
   
-  // Inject RAG context if found
   if (venueContext) {
     systemPrompt += `\n\n${venueContext}`;
   }
 
-  // Inject Concessions Queue status
   if (queueContext) {
     systemPrompt += `\n\n${queueContext}`;
   }
 
-  // Inject language instruction
   systemPrompt += `\n\nCRITICAL: You must respond in the following language: ${language}.`;
   
-  // Inject sentiment instruction
   if (sentiment === 'celebratory') {
     systemPrompt += `\nUser Tone is HAPPY/EXCITED. Match their energy with a celebratory, enthusiastic response!`;
   } else if (sentiment === 'disappointed') {
@@ -131,7 +125,7 @@ const translations = {
 };
 
 /**
- * Smart mock responses with localization, sentiment, wayfinding and queue prediction.
+ * Smart mock responses with localization, sentiment, wayfinding, queue prediction, and emergency safety routing.
  */
 function generateMockResponse(query, matchId, language, sentiment) {
   const q = query.toLowerCase();
@@ -162,9 +156,6 @@ function generateMockResponse(query, matchId, language, sentiment) {
     if (q.includes('elevator') || q.includes('lift')) {
       return dict[isArg ? 'elevatorsMetLife' : 'elevatorsSoFi'];
     }
-    if (q.includes('pizza') || q.includes('weather') || q.includes('code')) {
-      return dict.redirect;
-    }
     return dict.generic;
   }
 
@@ -174,6 +165,25 @@ function generateMockResponse(query, matchId, language, sentiment) {
     prefix = "🎉 AMAZING! ";
   } else if (sentiment === 'disappointed') {
     prefix = "I understand the frustration. ";
+  }
+
+  // Safety & Emergency Responder
+  const sectionMatch = q.match(/(?:sec|section)\s*(\d+)/i);
+  const secStr = sectionMatch ? `Section ${sectionMatch[1]}` : "your section";
+
+  if (q.includes('emergency') || q.includes('medical help') || q.includes('injured') || q.includes('heart') || q.includes('bleeding')) {
+    const firstAidSecs = isArg ? "Section 103, 128, or 201" : "Section 120 (Level 2) or 220 (Level 4)";
+    return `🚨 EMERGENCY ALERT: A medical dispatch request has been logged for ${secStr}. Paramedics are en route immediately. If you can walk safely, the closest First Aid station is located at ${firstAidSecs}. Please keep the aisles clear.`;
+  }
+  if (q.includes('fight') || q.includes('security help') || q.includes('stole')) {
+    return `🚨 SECURITY ALERT: A security team has been dispatched to ${secStr}. Stadium stewards are heading to your location. Please stay clear of confrontation.`;
+  }
+  if (q.includes('lost') || q.includes('missing') || q.includes('child')) {
+    const guestBooth = isArg ? "near Section 124" : "near YouTube Plaza Section 104";
+    return `🚨 MISSING PERSON REPORT FILED: Stadium stewards have been alerted. Please head to the nearest guest service booth located ${guestBooth} immediately so our staff can assist with a physical search.`;
+  }
+  if (q.includes('fire') || q.includes('hazard') || q.includes('spill')) {
+    return `⚠️ SAFETY HAZARD REPORTED: A hazard dispatch log has been filed for ${secStr}. Stadium maintenance and cleaning crews are heading to resolve this immediately. Thank you for reporting!`;
   }
 
   // Smart Queue Predictions & Food recommendation queries
@@ -273,11 +283,6 @@ function generateMockResponse(query, matchId, language, sentiment) {
     } else {
       return prefix + "France is leading Morocco 1-0 in the 43rd minute here at SoFi Stadium.";
     }
-  }
-
-  // Redirect for off-topic
-  if (q.includes('pizza') || q.includes('weather') || q.includes('code') || q.includes('programming')) {
-    return "I am a FIFA stadium operations assistant focused on live match support. Please ask about match rules, team stats, lineups, or venue facilities!";
   }
 
   if (isArg) {

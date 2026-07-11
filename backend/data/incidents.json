@@ -1,0 +1,21 @@
+{
+  "fifa_2026_001": [
+    {
+      "id": "inc_1783774843659_z40qx",
+      "type": "medical",
+      "section": "112",
+      "details": "Attendee feeling faint.",
+      "status": "open",
+      "timestamp": "2026-07-11T13:00:43.659Z"
+    },
+    {
+      "id": "inc_1783765102391",
+      "type": "hazard",
+      "section": "124",
+      "details": "Water spill in concourse corridor near concession stands.",
+      "status": "resolved",
+      "timestamp": "2026-07-11T12:00:00.000Z"
+    }
+  ],
+  "fifa_2026_002": []
+}

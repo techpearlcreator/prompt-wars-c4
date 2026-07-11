@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { fetchAnalytics } from '../services/api';
-import { X, RefreshCw, BarChart2, Shield, HeartHandshake, Zap } from 'lucide-react';
+import { fetchAnalytics, fetchIncidents } from '../services/api';
+import { X, RefreshCw, BarChart2, Shield, HeartHandshake, Zap, AlertTriangle } from 'lucide-react';
 
-export default function AnalyticsDashboard({ onClose, t }) {
+export default function AnalyticsDashboard({ onClose, t, matchId }) {
   const [data, setData] = useState(null);
+  const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -13,6 +14,9 @@ export default function AnalyticsDashboard({ onClose, t }) {
     try {
       const stats = await fetchAnalytics();
       setData(stats);
+      
+      const reports = await fetchIncidents(matchId || 'fifa_2026_001');
+      setIncidents(reports.incidents || []);
     } catch (err) {
       setError("Failed to load statistics database.");
     } finally {
@@ -22,7 +26,7 @@ export default function AnalyticsDashboard({ onClose, t }) {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [matchId]);
 
   if (!t) return null;
 
@@ -58,7 +62,7 @@ export default function AnalyticsDashboard({ onClose, t }) {
         </header>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto custom-scrollbar space-y-6">
+        <div className="p-6 overflow-y-auto custom-scrollbar space-y-6 flex-1">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 space-y-3">
               <div className="w-8 h-8 rounded-full border-4 border-stadium-navy-light border-t-stadium-gold animate-spin"></div>
@@ -91,8 +95,51 @@ export default function AnalyticsDashboard({ onClose, t }) {
                 </div>
               </div>
 
+              {/* Live Safety Dispatch Monitor */}
+              <div className="space-y-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-red-400 flex items-center">
+                  <AlertTriangle className="w-4 h-4 text-red-500 mr-1.5 animate-pulse" /> Live Safety Dispatch Log
+                </h3>
+                <div className="bg-stadium-navy-deep/40 border border-stadium-navy-light/40 rounded-2xl p-4 space-y-3 max-h-[160px] overflow-y-auto custom-scrollbar">
+                  {incidents.length === 0 ? (
+                    <p className="text-xs text-slate-400 text-center py-2">No safety incidents reported.</p>
+                  ) : (
+                    incidents.map((inc) => {
+                      const isMedical = inc.type === 'medical';
+                      const isSec = inc.type === 'security';
+                      const isResolved = inc.status === 'resolved';
+
+                      return (
+                        <div key={inc.id} className="flex justify-between items-start text-xs border-b border-stadium-navy-light/30 pb-2 last:border-0 last:pb-0">
+                          <div className="space-y-0.5">
+                            <div className="flex items-center space-x-1.5">
+                              <span className={`px-1.5 py-0.5 rounded text-[8px] font-black uppercase ${
+                                isMedical ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 
+                                isSec ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 
+                                'bg-blue-500/10 text-blue-400 border border-blue-500/20'
+                              }`}>
+                                {inc.type}
+                              </span>
+                              <span className="font-bold text-slate-200">Sec {inc.section}</span>
+                            </div>
+                            <p className="text-[11px] text-slate-400 line-clamp-1" title={inc.details}>
+                              {inc.details}
+                            </p>
+                          </div>
+                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
+                            isResolved ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20 animate-pulse'
+                          }`}>
+                            {inc.status.toUpperCase()}
+                          </span>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
               {/* Progress bars for topics */}
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">{t.popularTopics}</h3>
                 <div className="space-y-3 bg-stadium-navy-deep/40 border border-stadium-navy-light/40 p-4 rounded-2xl">
                   {Object.entries(data.topicsAsked).map(([topic, count]) => {
