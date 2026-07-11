@@ -1,21 +1,45 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MessageList from './MessageList';
 import InputBox from './InputBox';
-import { sendChatMessage } from '../services/api';
+import { sendChatMessage, fetchChatHistory } from '../services/api';
 import { RefreshCw, AlertCircle } from 'lucide-react';
 
 /**
  * ChatWindow Component
  * Manages chat flow, state, and errors.
  */
-export default function ChatWindow() {
+export default function ChatWindow({ matchId, language, t }) {
   const [messages, setMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
   const [error, setError] = useState(null);
+  const [userId, setUserId] = useState('anonymous');
+
+  // 1. Generate / Retrieve UserId on mount & load history
+  useEffect(() => {
+    let localId = localStorage.getItem('fifa_user_id');
+    if (!localId) {
+      localId = `usr_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem('fifa_user_id', localId);
+    }
+    setUserId(localId);
+    loadHistory(localId);
+  }, []);
+
+  const loadHistory = async (id) => {
+    try {
+      const data = await fetchChatHistory(id);
+      if (data.history && data.history.length > 0) {
+        setMessages(data.history);
+      }
+    } catch (err) {
+      console.warn("Could not retrieve past chat history logs.");
+    }
+  };
 
   const handleSendMessage = async (text) => {
     setError(null);
     const userMsg = {
+      id: `usr_${Date.now()}`,
       sender: 'user',
       text,
       timestamp: new Date().toISOString()
@@ -25,8 +49,10 @@ export default function ChatWindow() {
     setIsTyping(true);
 
     try {
-      const data = await sendChatMessage(text);
+      // Pass userId, matchId, and language to the backend
+      const data = await sendChatMessage(text, userId, matchId, language);
       const aiMsg = {
+        id: data.id || `ai_${Date.now()}`,
         sender: 'ai',
         text: data.response,
         timestamp: data.timestamp || new Date().toISOString()
@@ -39,17 +65,22 @@ export default function ChatWindow() {
     }
   };
 
-  const handleClearChat = () => {
+  const handleClearChat = async () => {
     setMessages([]);
     setError(null);
     setIsTyping(false);
+    
+    // Clear on backend
+    try {
+      await fetch(`/api/chat/history/${userId}`, { method: 'DELETE' }).catch(() => {});
+    } catch (e) {}
   };
 
   return (
     <section 
       id="chat-window"
       aria-label="FIFA Chat Assistant" 
-      className="flex flex-col h-full bg-stadium-navy-card rounded-3xl border border-stadium-navy-light/60 overflow-hidden shadow-2xl"
+      className="flex flex-col h-full bg-stadium-navy-card rounded-3xl border border-stadium-navy-light/60 overflow-hidden shadow-2xl animate-fade-in"
     >
       {/* Chat header */}
       <header className="flex justify-between items-center px-6 py-4 bg-stadium-navy-bubble border-b border-stadium-navy-light/60">
@@ -61,14 +92,16 @@ export default function ChatWindow() {
             </div>
           </div>
           <div>
-            <h1 className="text-sm md:text-base font-bold text-slate-100">Live Match Assistant</h1>
-            <p className="text-[11px] text-slate-400">Argentina vs Australia • Min 67</p>
+            <h1 className="text-sm md:text-base font-bold text-slate-100">{t.title}</h1>
+            <p className="text-[11px] text-slate-400">
+              {matchId === 'fifa_2026_001' ? 'Argentina vs Australia • Min 67' : 'France vs Morocco • Min 43'}
+            </p>
           </div>
         </div>
         
         <button 
           onClick={handleClearChat}
-          title="Clear Chat History"
+          title={t.clearTitle}
           className="flex items-center justify-center w-8 h-8 rounded-lg bg-stadium-navy-light hover:bg-stadium-navy-accent text-slate-400 hover:text-stadium-gold transition-colors cursor-pointer"
         >
           <RefreshCw className="w-4 h-4" />
@@ -76,7 +109,11 @@ export default function ChatWindow() {
       </header>
 
       {/* Message space */}
-      <MessageList messages={messages} isTyping={isTyping} />
+      <MessageList 
+        messages={messages} 
+        isTyping={isTyping} 
+        ratingThanksText={t.ratingThanks}
+      />
 
       {/* Error alert */}
       {error && (
@@ -88,7 +125,12 @@ export default function ChatWindow() {
 
       {/* Chat input */}
       <footer className="p-4 bg-stadium-navy-bubble border-t border-stadium-navy-light/60">
-        <InputBox onSendMessage={handleSendMessage} disabled={isTyping} />
+        <InputBox 
+          onSendMessage={handleSendMessage} 
+          disabled={isTyping} 
+          disabledPlaceholder={t.disabledPlaceholder}
+          placeholder={t.placeholder}
+        />
       </footer>
     </section>
   );

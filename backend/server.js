@@ -5,6 +5,7 @@ const logger = require('./middleware/logger');
 const errorHandler = require('./middleware/errorHandler');
 const healthRouter = require('./routes/health');
 const chatRouter = require('./routes/chat');
+const analyticsRouter = require('./routes/analytics');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -17,6 +18,7 @@ app.use(logger);
 // API Routes
 app.use('/health', healthRouter);
 app.use('/chat', chatRouter);
+app.use('/analytics', analyticsRouter);
 
 // Undefined Routes
 app.use('*', (req, res, next) => {

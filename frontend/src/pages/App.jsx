@@ -1,8 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
 import ChatWindow from '../components/ChatWindow';
-import { Trophy, MapPin, Users, Flame, Info } from 'lucide-react';
+import AnalyticsDashboard from '../components/AnalyticsDashboard';
+import translations from '../i18n';
+import { Trophy, MapPin, Users, Flame, Info, BarChart2, Globe, Calendar } from 'lucide-react';
 
 export default function App() {
+  const [matchId, setMatchId] = useState('fifa_2026_001');
+  const [language, setLanguage] = useState('English');
+  const [showDashboard, setShowDashboard] = useState(false);
+
+  const t = translations[language] || translations['English'];
+
+  const isArgMatch = matchId === 'fifa_2026_001';
+
   return (
     <main 
       id="app-main-layout"
@@ -13,22 +23,60 @@ export default function App() {
       <div className="absolute bottom-[-10%] right-[10%] w-[400px] h-[400px] rounded-full bg-blue-500/5 blur-[100px] pointer-events-none"></div>
 
       {/* Navigation Header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-stadium-navy-light/40 bg-stadium-navy-deep/80 backdrop-blur-md z-10 shrink-0">
-        <div className="flex items-center space-x-3">
+      <header className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-b border-stadium-navy-light/40 bg-stadium-navy-deep/80 backdrop-blur-md z-10 shrink-0 gap-3">
+        <div className="flex items-center space-x-3 w-full sm:w-auto">
           <div className="w-9 h-9 rounded-lg bg-stadium-gold flex items-center justify-center shadow-lg">
             <Trophy className="w-5 h-5 text-stadium-navy-deep" />
           </div>
           <div>
-            <h1 className="text-base sm:text-lg font-extrabold tracking-wide uppercase text-slate-100 flex items-center">
+            <h1 className="text-sm sm:text-base font-extrabold tracking-wide uppercase text-slate-100 flex items-center">
               FIFA WORLD CUP <span className="text-stadium-gold ml-1.5">2026</span>
             </h1>
-            <p className="text-[10px] text-slate-400 font-medium tracking-widest uppercase">Stadium Operations Intelligence</p>
+            <p className="text-[10px] text-slate-400 font-medium tracking-widest uppercase">{t.subtitle}</p>
           </div>
         </div>
         
-        <div className="hidden sm:flex items-center space-x-3 text-xs bg-stadium-navy-card/80 border border-stadium-navy-light px-3 py-1.5 rounded-full">
-          <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-          <span className="text-slate-300 font-semibold select-none">Live Ops Portal</span>
+        {/* Controls: Match, Language, Dashboard */}
+        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-start sm:justify-end">
+          {/* Match Dropdown */}
+          <div className="flex items-center space-x-1.5 bg-stadium-navy-card border border-stadium-navy-light px-2.5 py-1.5 rounded-xl text-xs text-slate-300">
+            <Calendar className="w-3.5 h-3.5 text-stadium-gold" />
+            <select 
+              value={matchId} 
+              onChange={(e) => setMatchId(e.target.value)}
+              className="bg-transparent border-none outline-none text-slate-200 cursor-pointer font-medium"
+              aria-label={t.selectMatch}
+            >
+              <option value="fifa_2026_001" className="bg-stadium-navy-card">ARG vs AUS</option>
+              <option value="fifa_2026_002" className="bg-stadium-navy-card">FRA vs MAR</option>
+            </select>
+          </div>
+
+          {/* Language Dropdown */}
+          <div className="flex items-center space-x-1.5 bg-stadium-navy-card border border-stadium-navy-light px-2.5 py-1.5 rounded-xl text-xs text-slate-300">
+            <Globe className="w-3.5 h-3.5 text-stadium-gold" />
+            <select 
+              value={language} 
+              onChange={(e) => setLanguage(e.target.value)}
+              className="bg-transparent border-none outline-none text-slate-200 cursor-pointer font-medium"
+              aria-label={t.selectLanguage}
+            >
+              <option value="English" className="bg-stadium-navy-card">English</option>
+              <option value="Spanish" className="bg-stadium-navy-card">Español</option>
+              <option value="Hindi" className="bg-stadium-navy-card">हिन्दी</option>
+              <option value="Arabic" className="bg-stadium-navy-card">العربية</option>
+              <option value="Mandarin" className="bg-stadium-navy-card">简体中文</option>
+            </select>
+          </div>
+
+          {/* Dashboard Toggle Button */}
+          <button
+            onClick={() => setShowDashboard(true)}
+            className="flex items-center space-x-1.5 bg-stadium-gold hover:bg-stadium-gold-light text-stadium-navy-deep px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-md"
+          >
+            <BarChart2 className="w-3.5 h-3.5" />
+            <span>{t.openDashboard}</span>
+          </button>
         </div>
       </header>
 
@@ -43,26 +91,30 @@ export default function App() {
           {/* Header */}
           <div>
             <h2 className="text-xs font-bold uppercase tracking-widest text-stadium-gold">Live Match Board</h2>
-            <p className="text-xs text-slate-400 mt-0.5">MetLife Stadium • East Rutherford</p>
+            <p className="text-xs text-slate-400 mt-0.5">
+              {isArgMatch ? 'MetLife Stadium • East Rutherford' : 'SoFi Stadium • Inglewood'}
+            </p>
           </div>
 
           {/* Match Score Card */}
           <div className="bg-stadium-navy-deep border border-stadium-navy-light/80 rounded-2xl p-4 flex flex-col items-center justify-center relative overflow-hidden shadow-inner">
             <div className="flex items-center justify-between w-full text-xs font-bold text-slate-400 px-2 mb-2">
-              <span>ARG</span>
-              <span className="px-2 py-0.5 rounded bg-stadium-gold/10 text-stadium-gold animate-pulse text-[10px]">MIN 67'</span>
-              <span>AUS</span>
+              <span>{isArgMatch ? 'ARG' : 'FRA'}</span>
+              <span className="px-2 py-0.5 rounded bg-stadium-gold/10 text-stadium-gold animate-pulse text-[10px]">
+                {isArgMatch ? "MIN 67'" : "MIN 43'"}
+              </span>
+              <span>{isArgMatch ? 'AUS' : 'MAR'}</span>
             </div>
             
             <div className="flex items-center space-x-6">
-              <span className="text-3xl font-extrabold text-slate-100">2</span>
+              <span className="text-3xl font-extrabold text-slate-100">{isArgMatch ? '2' : '1'}</span>
               <span className="text-slate-500 font-medium">:</span>
-              <span className="text-3xl font-extrabold text-slate-100">1</span>
+              <span className="text-3xl font-extrabold text-slate-100">{isArgMatch ? '1' : '0'}</span>
             </div>
             
             <div className="flex justify-between w-full text-[10px] text-slate-400 mt-3 border-t border-stadium-navy-light/40 pt-2 px-1">
-              <span>Argentina</span>
-              <span>Australia</span>
+              <span>{isArgMatch ? 'Argentina' : 'France'}</span>
+              <span>{isArgMatch ? 'Australia' : 'Morocco'}</span>
             </div>
           </div>
 
@@ -72,35 +124,55 @@ export default function App() {
               <Flame className="w-3.5 h-3.5 text-stadium-gold mr-1.5" /> Recent Events
             </h3>
             
-            <div className="space-y-3 border-l border-stadium-navy-light/60 ml-2 pl-3 py-1">
-              <div className="relative text-xs">
-                <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-gold ring-4 ring-stadium-navy-card"></span>
-                <p className="text-[10px] text-slate-400">Minute 61</p>
-                <p className="text-slate-200 font-medium">Goal Australia!</p>
-                <p className="text-[11px] text-slate-400">Duke (Header)</p>
+            {isArgMatch ? (
+              <div className="space-y-3 border-l border-stadium-navy-light/60 ml-2 pl-3 py-1">
+                <div className="relative text-xs">
+                  <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-gold ring-4 ring-stadium-navy-card"></span>
+                  <p className="text-[10px] text-slate-400">Minute 61</p>
+                  <p className="text-slate-200 font-medium">Goal Australia!</p>
+                  <p className="text-[11px] text-slate-400">Duke (Header)</p>
+                </div>
+                <div className="relative text-xs">
+                  <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-navy-light ring-4 ring-stadium-navy-card"></span>
+                  <p className="text-[10px] text-slate-400">Minute 55</p>
+                  <p className="text-slate-200 font-medium">Sub Australia</p>
+                  <p className="text-[11px] text-slate-400">Irvine in / Leckie out</p>
+                </div>
+                <div className="relative text-xs">
+                  <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-gold ring-4 ring-stadium-navy-card"></span>
+                  <p className="text-[10px] text-slate-400">Minute 34</p>
+                  <p className="text-slate-200 font-medium">Goal Confirmed (VAR)</p>
+                  <p className="text-[11px] text-slate-400">Alvarez score check</p>
+                </div>
+                <div className="relative text-xs">
+                  <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-gold ring-4 ring-stadium-navy-card"></span>
+                  <p className="text-[10px] text-slate-400">Minute 12</p>
+                  <p className="text-slate-200 font-medium">Goal Argentina!</p>
+                  <p className="text-[11px] text-slate-400">Messi (Long strike)</p>
+                </div>
               </div>
-
-              <div className="relative text-xs">
-                <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-navy-light ring-4 ring-stadium-navy-card"></span>
-                <p className="text-[10px] text-slate-400">Minute 55</p>
-                <p className="text-slate-200 font-medium">Sub Australia</p>
-                <p className="text-[11px] text-slate-400">Irvine in / Leckie out</p>
+            ) : (
+              <div className="space-y-3 border-l border-stadium-navy-light/60 ml-2 pl-3 py-1">
+                <div className="relative text-xs">
+                  <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-navy-light ring-4 ring-stadium-navy-card"></span>
+                  <p className="text-[10px] text-slate-400">Minute 38</p>
+                  <p className="text-slate-200 font-medium">VAR check: No Penalty</p>
+                  <p className="text-[11px] text-slate-400">Accidental handball ruled</p>
+                </div>
+                <div className="relative text-xs">
+                  <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-navy-light ring-4 ring-stadium-navy-card"></span>
+                  <p className="text-[10px] text-slate-400">Minute 21</p>
+                  <p className="text-slate-200 font-medium">Yellow Card Morocco</p>
+                  <p className="text-[11px] text-slate-400">Amrabat (Tactical foul)</p>
+                </div>
+                <div className="relative text-xs">
+                  <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-gold ring-4 ring-stadium-navy-card"></span>
+                  <p className="text-[10px] text-slate-400">Minute 5</p>
+                  <p className="text-slate-200 font-medium">Goal France!</p>
+                  <p className="text-[11px] text-slate-400">Mbappe (Rebound strike)</p>
+                </div>
               </div>
-
-              <div className="relative text-xs">
-                <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-gold ring-4 ring-stadium-navy-card"></span>
-                <p className="text-[10px] text-slate-400">Minute 34</p>
-                <p className="text-slate-200 font-medium">Goal Confirmed (VAR)</p>
-                <p className="text-[11px] text-slate-400">Alvarez score check</p>
-              </div>
-
-              <div className="relative text-xs">
-                <span className="absolute left-[-17px] top-1.5 w-2 h-2 rounded-full bg-stadium-gold ring-4 ring-stadium-navy-card"></span>
-                <p className="text-[10px] text-slate-400">Minute 12</p>
-                <p className="text-slate-200 font-medium">Goal Argentina!</p>
-                <p className="text-[11px] text-slate-400">Messi (Long strike)</p>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Quick Info Box */}
@@ -112,11 +184,11 @@ export default function App() {
             <div className="space-y-1.5 text-[11px]">
               <div className="flex justify-between">
                 <span className="flex items-center"><MapPin className="w-3 h-3 mr-1" /> Venue</span>
-                <span className="text-slate-200 font-medium">MetLife Stadium</span>
+                <span className="text-slate-200 font-medium">{isArgMatch ? 'MetLife Stadium' : 'SoFi Stadium'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="flex items-center"><Users className="w-3 h-3 mr-1" /> Crowd</span>
-                <span className="text-slate-200 font-medium">82,500 Fans</span>
+                <span className="text-slate-200 font-medium">{isArgMatch ? '82,500 Fans' : '70,240 Fans'}</span>
               </div>
             </div>
           </div>
@@ -124,9 +196,14 @@ export default function App() {
 
         {/* Chat window space */}
         <div className="flex-1 h-full overflow-hidden">
-          <ChatWindow />
+          <ChatWindow matchId={matchId} language={language} t={t} />
         </div>
       </div>
+
+      {/* Analytics Dashboard modal */}
+      {showDashboard && (
+        <AnalyticsDashboard onClose={() => setShowDashboard(false)} t={t} />
+      )}
     </main>
   );
 }
