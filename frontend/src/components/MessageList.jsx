@@ -791,13 +791,49 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
               <span className="font-bold text-slate-200">Sec {section}</span>
             </div>
 
-            {/* Clickable pins overlay */}
+            {/* Clickable single active target pin overlay */}
             <div className="absolute inset-0 pointer-events-none">
+              <div 
+                style={{ 
+                  left: `${(activeTarget.x / 400) * 100}%`, 
+                  top: `${(activeTarget.y / 240) * 100}%`,
+                  transform: 'translate(-50%, -85%)'
+                }} 
+                className="absolute z-20 flex flex-col items-center scale-110"
+              >
+                <div className="relative w-7 h-9 flex items-center justify-center shrink-0">
+                  <svg 
+                    style={{ color: activeTarget.color }}
+                    className="absolute inset-0 w-full h-full filter drop-shadow-md" 
+                    viewBox="0 0 24 24" 
+                    fill="currentColor"
+                  >
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                  </svg>
+                  <div className="absolute top-[5px] w-[15px] h-[15px] rounded-full bg-white flex items-center justify-center text-[9px] z-10 shadow-sm">
+                    {activeEmoji}
+                  </div>
+                  
+                  {/* Crowd capacity bubble overlay */}
+                  <div className="absolute -top-3.5 px-1 rounded bg-slate-950 border border-slate-700 text-[6px] font-black text-slate-200 shadow-sm leading-tight whitespace-nowrap">
+                    {activeTarget.capacity}%
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Nearest Facility Options Grid Selector (Phase 26 Clutter Free) */}
+          <div className="space-y-2 shrink-0">
+            <span className="text-[8px] text-slate-400 uppercase tracking-wider block font-black">Choose Nearest Location</span>
+            <div className="grid grid-cols-2 gap-2">
               {targetsList.map((tg, idx) => {
-                const isCurrentActive = idx === selectedIndex;
+                const isSelected = idx === selectedIndex;
                 const emoji = tg.label.split(' ')[0];
+                const name = tg.label.split(' ').slice(1).join(' ');
+                
                 return (
-                  <button 
+                  <button
                     key={tg.id}
                     onClick={() => {
                       setSelectedTargets(prev => ({
@@ -805,40 +841,27 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                         [msgId]: idx
                       }));
                     }}
-                    style={{ 
-                      left: `${(tg.x / 400) * 100}%`, 
-                      top: `${(tg.y / 240) * 100}%`,
-                      transform: 'translate(-50%, -85%)',
-                      transition: 'transform 0.2s ease-out'
-                    }} 
-                    className={`absolute z-20 flex flex-col items-center cursor-pointer pointer-events-auto group outline-none ${isCurrentActive ? 'scale-110' : 'scale-90'}`}
-                    title={`${tg.label} (${tg.capacity}% crowd)`}
+                    className={`flex items-center justify-between py-2 px-2.5 rounded-xl border text-left cursor-pointer transition-all duration-300 outline-none ${
+                      isSelected
+                        ? 'border-stadium-gold bg-stadium-gold/15 shadow-[0_0_10px_rgba(251,191,36,0.08)]'
+                        : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
+                    }`}
                   >
-                    <div className="relative w-7 h-9 flex items-center justify-center shrink-0">
-                      {/* Teardrop Pin colored dynamically based on crowd level */}
-                      <svg 
-                        style={{ color: tg.color }}
-                        className={`absolute inset-0 w-full h-full filter drop-shadow-md transition-all duration-300 ${isCurrentActive ? 'opacity-100' : 'opacity-75 group-hover:opacity-100'}`} 
-                        viewBox="0 0 24 24" 
-                        fill="currentColor"
-                      >
-                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
-                      </svg>
-                      {/* White center holding target emoji */}
-                      <div className="absolute top-[5px] w-[15px] h-[15px] rounded-full bg-white flex items-center justify-center text-[9px] z-10 shadow-sm">
-                        {emoji}
-                      </div>
-                      
-                      {/* Crowd capacity bubble overlay */}
-                      <div className="absolute -top-3.5 px-1 rounded bg-slate-950 border border-slate-700 text-[6px] font-black text-slate-200 shadow-sm leading-tight whitespace-nowrap">
-                        {tg.capacity}%
+                    <div className="flex items-center space-x-1.5 min-w-0">
+                      <span className="text-xs shrink-0">{emoji}</span>
+                      <div className="min-w-0">
+                        <span className={`text-[9px] font-black block truncate ${isSelected ? 'text-stadium-gold-light' : 'text-slate-200'}`}>
+                          {name}
+                        </span>
+                        <span className="text-[7.5px] text-slate-400 block font-mono">Crowd: {tg.capacity}%</span>
                       </div>
                     </div>
-                    {isCurrentActive && (
-                      <span className="mt-0.5 px-1.5 py-0.5 bg-slate-900/90 text-stadium-gold border border-stadium-gold/30 text-[5px] font-black rounded uppercase tracking-widest whitespace-nowrap select-none pointer-events-none shadow-md">
-                        Selected
-                      </span>
-                    )}
+                    <span 
+                      style={{ backgroundColor: `${tg.color}20`, color: tg.color, borderColor: `${tg.color}40` }}
+                      className="px-1 py-0.5 rounded text-[7px] font-extrabold border shrink-0 font-mono"
+                    >
+                      {tg.capacity < 30 ? "LOW" : tg.capacity < 60 ? "MID" : "BUSY"}
+                    </span>
                   </button>
                 );
               })}
