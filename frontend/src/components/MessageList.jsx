@@ -573,65 +573,55 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
               </div>
             </div>
 
-            {/* Premium Route Options Stacked Selector (Phase 24 Redesign) */}
-            <div className="space-y-2 shrink-0">
-              <span className="text-[8.5px] text-stadium-gold uppercase tracking-wider block font-black">⭐ Recommended Route</span>
-              
+            {/* Premium Route Options Flexbox Comparison Row (Phase 26 Side-by-Side) */}
+            <div className="flex gap-2 shrink-0">
               {/* Route A Card */}
               <button
                 onClick={() => selectRoute('clear')}
-                className={`w-full flex items-center justify-between py-3 px-3.5 sm:py-2.5 sm:px-3 rounded-xl border text-left cursor-pointer transition-all duration-300 outline-none ${
+                className={`flex-1 flex flex-col p-2 rounded-xl border text-left cursor-pointer transition-all duration-300 outline-none min-w-0 ${
                   isClear
                     ? 'border-emerald-500 bg-emerald-500/10 shadow-[0_0_12px_rgba(16,185,129,0.08)]'
                     : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
                 }`}
               >
-                <div className="flex items-center space-x-2.5">
+                <div className="flex items-center space-x-1.5 w-full">
                   <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
                     isClear ? 'border-emerald-400' : 'border-slate-600'
                   }`}>
                     {isClear && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>}
                   </div>
-                  <div>
-                    <div className={`text-[10px] font-black transition-colors ${isClear ? 'text-emerald-400' : 'text-slate-200'}`}>
-                      Route A (Concourse Walkway)
-                    </div>
-                    <div className="text-[8px] text-slate-400 mt-0.5 font-medium">🟢 Low Crowd | ♿ Accessible | 🚶 Easy walking</div>
-                  </div>
+                  <span className={`text-[10px] font-black truncate ${isClear ? 'text-emerald-400' : 'text-slate-200'}`}>
+                    Route A (Concourse)
+                  </span>
                 </div>
-                <div className="text-right font-mono shrink-0 pl-2">
-                  <div className="text-[10px] font-black text-emerald-400">1 min</div>
-                  <div className="text-[8px] text-slate-400 mt-0.5">ETA</div>
+                <div className="mt-1 flex justify-between items-baseline w-full">
+                  <span className="text-[7.5px] text-slate-400 font-medium">🟢 Low Crowd</span>
+                  <span className="text-[9.5px] font-mono font-black text-emerald-400">10% • 1m</span>
                 </div>
               </button>
-
-              <span className="text-[8.5px] text-slate-400 uppercase tracking-wider block font-black pt-1">Other routes</span>
 
               {/* Route B Card */}
               <button
                 onClick={() => selectRoute('main')}
-                className={`w-full flex items-center justify-between py-3 px-3.5 sm:py-2.5 sm:px-3 rounded-xl border text-left cursor-pointer transition-all duration-300 outline-none ${
+                className={`flex-1 flex flex-col p-2 rounded-xl border text-left cursor-pointer transition-all duration-300 outline-none min-w-0 ${
                   !isClear
                     ? 'border-red-500 bg-red-500/10 shadow-[0_0_12px_rgba(239,68,68,0.08)]'
                     : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
                 }`}
               >
-                <div className="flex items-center space-x-2.5">
+                <div className="flex items-center space-x-1.5 w-full">
                   <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
                     !isClear ? 'border-red-400' : 'border-slate-600'
                   }`}>
                     {!isClear && <div className="w-1.5 h-1.5 rounded-full bg-red-400"></div>}
                   </div>
-                  <div>
-                    <div className={`text-[10px] font-black transition-colors ${!isClear ? 'text-red-400' : 'text-slate-200'}`}>
-                      Route B (Seating Shortcut)
-                    </div>
-                    <div className="text-[8px] text-slate-400 mt-0.5 font-medium">🔴 88% Crowd | ⚠️ High Congestion</div>
-                  </div>
+                  <span className={`text-[10px] font-black truncate ${!isClear ? 'text-red-400' : 'text-slate-200'}`}>
+                    Route B (Shortcut)
+                  </span>
                 </div>
-                <div className="text-right font-mono shrink-0 pl-2">
-                  <div className="text-[10px] font-black text-red-400">3 mins</div>
-                  <div className="text-[8px] text-slate-400 mt-0.5">ETA</div>
+                <div className="mt-1 flex justify-between items-baseline w-full">
+                  <span className="text-[7.5px] text-slate-400 font-medium">🔴 Congested</span>
+                  <span className="text-[9.5px] font-mono font-black text-red-400">88% • 3m</span>
                 </div>
               </button>
             </div>
@@ -706,7 +696,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
           </div>
 
           {/* Large Legible 2D Concourse Wayfinding Map */}
-          <div className="relative w-full h-[230px] bg-slate-950/90 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center">
+          <div className="relative w-full h-[170px] sm:h-[220px] bg-slate-950/90 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center">
             {/* Grid background lines */}
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:15px_15px] opacity-10 pointer-events-none"></div>
 
@@ -823,10 +813,10 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
             </div>
           </div>
 
-          {/* Nearest Facility Options Grid Selector (Phase 26 Clutter Free) */}
-          <div className="space-y-2 shrink-0">
-            <span className="text-[8px] text-slate-400 uppercase tracking-wider block font-black">Choose Nearest Location</span>
-            <div className="grid grid-cols-2 gap-2">
+          {/* Nearest Facility Options Horizontal Chips Selector (Phase 26 Clutter Free) */}
+          <div className="space-y-1.5 shrink-0">
+            <span className="text-[7.5px] text-slate-400 uppercase tracking-wider block font-black">Choose Nearest Location</span>
+            <div className="flex space-x-2 overflow-x-auto scrollbar-none pb-1 py-0.5 select-none -mx-1 px-1">
               {targetsList.map((tg, idx) => {
                 const isSelected = idx === selectedIndex;
                 const emoji = tg.label.split(' ')[0];
@@ -841,26 +831,19 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                         [msgId]: idx
                       }));
                     }}
-                    className={`flex items-center justify-between py-2 px-2.5 rounded-xl border text-left cursor-pointer transition-all duration-300 outline-none ${
+                    className={`flex items-center space-x-1.5 py-1.5 px-3 rounded-full border text-xs cursor-pointer transition-all duration-300 outline-none whitespace-nowrap shrink-0 ${
                       isSelected
-                        ? 'border-stadium-gold bg-stadium-gold/15 shadow-[0_0_10px_rgba(251,191,36,0.08)]'
-                        : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
+                        ? 'border-stadium-gold bg-stadium-gold/15 text-stadium-gold shadow-[0_0_8px_rgba(251,191,36,0.06)]'
+                        : 'border-slate-800 bg-slate-950/40 text-slate-300 hover:border-slate-700 hover:text-white'
                     }`}
                   >
-                    <div className="flex items-center space-x-1.5 min-w-0">
-                      <span className="text-xs shrink-0">{emoji}</span>
-                      <div className="min-w-0">
-                        <span className={`text-[9px] font-black block truncate ${isSelected ? 'text-stadium-gold-light' : 'text-slate-200'}`}>
-                          {name}
-                        </span>
-                        <span className="text-[7.5px] text-slate-400 block font-mono">Crowd: {tg.capacity}%</span>
-                      </div>
-                    </div>
+                    <span>{emoji}</span>
+                    <span className="text-[9px] font-bold">{name}</span>
                     <span 
-                      style={{ backgroundColor: `${tg.color}20`, color: tg.color, borderColor: `${tg.color}40` }}
-                      className="px-1 py-0.5 rounded text-[7px] font-extrabold border shrink-0 font-mono"
+                      style={{ color: tg.color }}
+                      className="text-[8px] font-mono font-black animate-pulse"
                     >
-                      {tg.capacity < 30 ? "LOW" : tg.capacity < 60 ? "MID" : "BUSY"}
+                      ({tg.capacity}%)
                     </span>
                   </button>
                 );
