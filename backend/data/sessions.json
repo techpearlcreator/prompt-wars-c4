@@ -205,6 +205,25 @@
       "createdAt": 1783767644654,
       "matchId": "fifa_2026_001",
       "lastActivity": 1783786414246
+    },
+    "usr_1783824208052_emyli9kie": {
+      "messages": [
+        {
+          "id": "msg_1783824271290_zq3dm",
+          "text": "Where is the nearest restroom from Gate C?",
+          "sender": "user",
+          "timestamp": 1783824271291
+        },
+        {
+          "id": "msg_1783824271305_fy6h8",
+          "text": "Here is the interactive seating map and wayfinding route from Section 112 to the nearest gate_c:\n[STADIUM_MAP: MetLife Stadium, section: 112, target: gate_c, eta: 3 mins, distance: 70m]",
+          "sender": "ai",
+          "timestamp": 1783824271306
+        }
+      ],
+      "createdAt": 1783824271290,
+      "matchId": "fifa_2026_001",
+      "lastActivity": 1783824271306
     }
   },
   "feedback": {

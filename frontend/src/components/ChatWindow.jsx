@@ -191,7 +191,7 @@ export default function ChatWindow({ matchId, language, t, socket }) {
             <div className="flex justify-between items-center pb-2 border-b border-stadium-navy-light/60">
               <div className="flex items-center space-x-2 text-red-400 font-extrabold text-sm uppercase">
                 <AlertTriangle className="w-5 h-5 animate-pulse text-red-500" />
-                <span>Submit SOS Alert</span>
+                <span>Emergency SOS Assistance</span>
               </div>
               <button 
                 type="button"
@@ -233,16 +233,33 @@ export default function ChatWindow({ matchId, language, t, socket }) {
             <div className="space-y-1">
               <label className="text-[10px] text-slate-400 font-bold uppercase">Emergency Details</label>
               <textarea
-                placeholder="Describe what is happening..."
+                placeholder="Describe the situation details..."
                 value={sosDetails}
                 onChange={(e) => setSosDetails(e.target.value)}
-                rows={3}
+                rows={2}
                 required
                 className="w-full bg-stadium-navy-deep border border-stadium-navy-light/80 rounded-xl px-3 py-2 text-xs text-slate-200 focus:border-red-500/80 outline-none resize-none"
               />
             </div>
 
-            <div className="flex space-x-2.5 pt-2">
+            {/* SOS Dispatch Confirmation indicators (Phase 24) */}
+            <div className="bg-slate-950/60 rounded-xl p-3 border border-slate-800 text-[10px] space-y-1.5 text-slate-300 font-mono leading-none select-none">
+              <span className="text-[8px] text-red-400 uppercase tracking-wider block font-black mb-1">Attached Dispatch Data:</span>
+              <div className="flex items-center space-x-1.5">
+                <span className="text-emerald-400 font-black">✓</span>
+                <span>Location (GPS coordinates)</span>
+              </div>
+              <div className="flex items-center space-x-1.5">
+                <span className="text-emerald-400 font-black">✓</span>
+                <span>Seat section (Sec {sosSection || '112'})</span>
+              </div>
+              <div className="flex items-center space-x-1.5">
+                <span className="text-emerald-400 font-black">✓</span>
+                <span>Active wayfinding route history</span>
+              </div>
+            </div>
+
+            <div className="flex space-x-2.5 pt-1">
               <button
                 type="button"
                 onClick={() => setShowSosModal(false)}
@@ -255,18 +272,26 @@ export default function ChatWindow({ matchId, language, t, socket }) {
                 disabled={isSubmittingSos}
                 className="flex-1 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-xs font-bold transition-all text-slate-100 cursor-pointer shadow-md disabled:opacity-50"
               >
-                {isSubmittingSos ? "Filing..." : "Send SOS Dispatch"}
+                {isSubmittingSos ? "Filing..." : "Confirm SOS Dispatch"}
               </button>
             </div>
           </form>
         </div>
       )}
 
+      {/* Floating SOS button */}
+      <button
+        onClick={() => setShowSosModal(true)}
+        className="absolute bottom-24 right-4 z-20 flex items-center space-x-2 px-4 py-2.5 rounded-full bg-red-600 hover:bg-red-500 text-white shadow-lg animate-pulse hover:animate-none transition-all border border-white/20"
+      >
+        <AlertTriangle className="w-4 h-4" />
+        <span className="text-xs font-black uppercase tracking-wider">SOS</span>
+      </button>
+
       {/* Chat header */}
-      <header className="flex justify-between items-center px-6 py-4 bg-stadium-navy-bubble border-b border-stadium-navy-light/60">
+      <header className="px-4 py-3 bg-stadium-navy-bubble border-b border-stadium-navy-light/60 flex items-center justify-between shrink-0">
         <div className="flex items-center space-x-3">
-          <div className="relative">
-            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-stadium-navy-bubble"></span>
+          <div className="relative flex items-center space-x-1">
             <div className="w-10 h-10 rounded-xl bg-stadium-navy-light flex items-center justify-center border border-stadium-gold/20">
               <span className="text-stadium-gold font-bold text-base">26</span>
             </div>
@@ -280,15 +305,6 @@ export default function ChatWindow({ matchId, language, t, socket }) {
         </div>
         
         <div className="flex items-center space-x-2">
-          {/* SOS button */}
-          <button
-            onClick={() => setShowSosModal(true)}
-            className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-red-600/90 hover:bg-red-500 text-slate-100 text-xs font-black tracking-wide cursor-pointer transition-all animate-pulse"
-          >
-            <AlertTriangle className="w-3.5 h-3.5" />
-            <span>SOS</span>
-          </button>
-
           <button 
             onClick={handleClearChat}
             title={t.clearTitle}

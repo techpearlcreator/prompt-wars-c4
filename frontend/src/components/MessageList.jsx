@@ -17,6 +17,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
   const [mapViews, setMapViews] = useState({}); // Stores 'seating' or 'suggested' keyed by messageId
   const [mapRoutes, setMapRoutes] = useState({}); // Stores 'clear' or 'main' keyed by messageId
   const [selectedTargets, setSelectedTargets] = useState({}); // Stores selected target index keyed by messageId
+  const [navigationActive, setNavigationActive] = useState({}); // { [msgId]: boolean }
 
   const getRestroomsForSection = (sec) => {
     const s = sec.trim();
@@ -337,6 +338,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
       // Suggested Route Concourse View
       if (currentView === 'suggested') {
         const isClear = currentRoute === 'clear';
+        const isNavigating = navigationActive[msgId] === true;
         
         // Define paths and info for suggested routes
         const routeAPath = activeTarget.pathD;
@@ -345,6 +347,141 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
           : `M 275 155 L 275 85 L ${activeTarget.x} ${activeTarget.y}`;
 
         const activePath = isClear ? routeAPath : routeBPath;
+        const targetName = activeTarget.label.split(' ')[1] || "Facility";
+
+        if (isNavigating) {
+          return (
+            <div className="bg-slate-900 border border-red-500/40 rounded-2xl p-4 my-2.5 shadow-xl space-y-3.5 max-w-sm select-none text-slate-100 font-sans animate-in zoom-in duration-200">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                <div className="flex items-center space-x-1.5 text-red-500 font-black uppercase tracking-wider text-xs animate-pulse">
+                  <div className="w-2 h-2 rounded-full bg-red-500 animate-ping mr-1"></div>
+                  <span>Live Navigation Active</span>
+                </div>
+                <span className="text-[10px] text-slate-400 font-semibold truncate max-w-[130px]">{venue}</span>
+              </div>
+
+              {/* Large Map Viewport */}
+              <div className="relative w-full h-[250px] bg-slate-950/90 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center">
+                {/* Grid Background */}
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:15px_15px] opacity-10 pointer-events-none"></div>
+
+                <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 240">
+                  {/* Outer Stadium Ellipse wall */}
+                  <ellipse cx="200" cy="120" rx="175" ry="98" fill="#0b1329" stroke="#1e293b" strokeWidth="4" />
+                  <ellipse cx="200" cy="120" rx="168" ry="92" fill="none" stroke="#334155" strokeWidth="1.5" opacity="0.6" />
+
+                  {/* Concourse Walkway Corridor (Fill background) */}
+                  <ellipse cx="200" cy="120" rx="146" ry="80" fill="none" stroke="#1e293b" strokeWidth="32" opacity="0.75" />
+
+                  {/* Seating Bowl Inner Wall boundary */}
+                  <ellipse cx="200" cy="120" rx="130" ry="64" fill="#0f172a" stroke="#475569" strokeWidth="2.5" />
+
+                  {/* Grass Field in Center */}
+                  <rect x="152" y="95" width="96" height="50" rx="3" fill="#10b981" fillOpacity="0.08" stroke="#10b981" strokeWidth="1.5" opacity="0.3" />
+
+                  {/* Vomitory seating access tunnels */}
+                  <line x1="285" y1="162" x2="305" y2="173" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
+                  <line x1="115" y1="78" x2="95" y2="67" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
+                  <line x1="115" y1="162" x2="95" y2="173" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
+                  <line x1="285" y1="78" x2="305" y2="67" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
+
+                  {/* Selected Active path with crawling dashed overlay */}
+                  <path 
+                    d={activePath} 
+                    fill="none" 
+                    stroke={isClear ? "#10b981" : "#ef4444"} 
+                    strokeWidth="5" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                  />
+                  <path 
+                    d={activePath} 
+                    fill="none" 
+                    stroke="#ffffff" 
+                    strokeWidth="1.5" 
+                    strokeDasharray="4,4" 
+                    className="route-dash-animated" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                  />
+
+                  {/* Pulse Blue Dot Marker (GPS Start) */}
+                  <circle cx={section === "104" ? 125 : 275} cy={section === "104" ? 85 : 155} r="10" fill="#3b82f6" opacity="0.4" className="animate-ping" />
+                  <circle cx={section === "104" ? 125 : 275} cy={section === "104" ? 85 : 155} r="5.5" fill="#2563eb" stroke="#ffffff" strokeWidth="2" />
+                </svg>
+
+                {/* Clickable pins overlay */}
+                <div className="absolute inset-0 pointer-events-none">
+                  <div 
+                    style={{ 
+                      left: `${(activeTarget.x / 400) * 100}%`, 
+                      top: `${(activeTarget.y / 240) * 100}%`,
+                      transform: 'translate(-50%, -85%)'
+                    }} 
+                    className="absolute z-20 flex flex-col items-center scale-110"
+                  >
+                    <div className="relative w-7 h-9 flex items-center justify-center shrink-0">
+                      <svg 
+                        style={{ color: isClear ? activeTarget.color : "#ef4444" }}
+                        className="absolute inset-0 w-full h-full filter drop-shadow-md" 
+                        viewBox="0 0 24 24" 
+                        fill="currentColor"
+                      >
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                      </svg>
+                      <div className="absolute top-[5px] w-[15px] h-[15px] rounded-full bg-white flex items-center justify-center text-[9px] z-10 shadow-sm">
+                        {activeEmoji}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Navigation Status Floaters */}
+                <div className="absolute bottom-3 left-3 bg-slate-950/80 px-2 py-1 border border-slate-800 rounded-lg text-[9px] font-mono leading-none">
+                  <span className="text-slate-400 uppercase text-[7px] block">Your Location</span>
+                  <span className="font-bold text-slate-200">Sec {section} Gateway</span>
+                </div>
+
+                <div className="absolute top-3 right-3 bg-slate-950/80 px-2 py-1 border border-slate-800 rounded-lg text-[9px] font-mono leading-none">
+                  <span className="text-slate-400 uppercase text-[7px] block">Destination</span>
+                  <span className="font-bold text-slate-200">{targetName}</span>
+                </div>
+              </div>
+
+              {/* Navigation Dashboard (Phase 24) */}
+              <div className="bg-slate-950/60 rounded-xl p-3 border border-slate-800 space-y-2 font-sans">
+                <div className="flex justify-between items-center text-[10px]">
+                  <span className="font-bold text-slate-200">🏃 Estimated Arrival</span>
+                  <span className="font-mono text-emerald-400 font-black">{isClear ? "45 Seconds" : "3 Minutes"}</span>
+                </div>
+                
+                <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800/80 space-y-1">
+                  <span className="text-[7.5px] text-slate-500 uppercase tracking-wider block font-black">Current Step</span>
+                  <p className="text-xs font-bold text-slate-100">
+                    {section === "104" ? "Turn left at Gate 4 and walk 30m" : "Turn right after Gate 12 and walk 40m"}
+                  </p>
+                  <p className="text-[9px] text-slate-400">
+                    Next Checkpoint: Concession Food Court (35m ahead)
+                  </p>
+                </div>
+
+                <div className="flex justify-between items-center pt-1.5">
+                  <div className="flex items-center space-x-1.5 text-[9px] font-mono">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+                    <span className="text-slate-400">GPS Status:</span>
+                    <span className="text-emerald-400 font-bold">Active Navigating</span>
+                  </div>
+                  <button 
+                    onClick={() => setNavigationActive(prev => ({ ...prev, [msgId]: false }))}
+                    className="px-3 py-1.5 rounded-lg bg-red-950 border border-red-500/30 hover:bg-red-900/50 text-red-200 text-[9px] font-black uppercase tracking-wider cursor-pointer shadow transition-all"
+                  >
+                    Stop Navigation
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        }
 
         return (
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 my-2.5 shadow-xl space-y-3.5 max-w-sm select-none text-slate-100 font-sans">
@@ -357,7 +494,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
             </div>
 
             {/* Graphical Vector Concourse Map */}
-            <div className="relative w-full h-[230px] bg-slate-950/90 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center">
+            <div className="relative w-full h-[250px] bg-slate-950/90 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center">
               {/* Grid Background */}
               <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:15px_15px] opacity-10 pointer-events-none"></div>
 
@@ -380,30 +517,6 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                 <line x1="115" y1="78" x2="95" y2="67" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
                 <line x1="115" y1="162" x2="95" y2="173" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
                 <line x1="285" y1="78" x2="305" y2="67" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
-
-                {/* Route A Path (Green Concourse) - Always Visible */}
-                <path 
-                  d={routeAPath} 
-                  fill="none" 
-                  stroke="#10b981" 
-                  strokeWidth="4" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  opacity={isClear ? "0.85" : "0.25"} 
-                  className="transition-opacity duration-300"
-                />
-
-                {/* Route B Path (Red Shortcut) - Always Visible */}
-                <path 
-                  d={routeBPath} 
-                  fill="none" 
-                  stroke="#ef4444" 
-                  strokeWidth="4" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  opacity={!isClear ? "0.85" : "0.25"} 
-                  className="transition-opacity duration-300"
-                />
 
                 {/* Animated white crawling dash overlay on active route */}
                 <path 
@@ -456,13 +569,13 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
 
               <div className="absolute top-3 right-3 bg-slate-950/80 px-2 py-1 border border-slate-800 rounded-lg text-[9px] font-mono leading-none">
                 <span className="text-slate-400 uppercase text-[7px] block">Destination</span>
-                <span className="font-bold text-slate-200">{activeTarget.label.split(' ')[1]}</span>
+                <span className="font-bold text-slate-200">{targetName}</span>
               </div>
             </div>
 
-            {/* Premium Route Options Stacked Selector */}
+            {/* Premium Route Options Stacked Selector (Phase 24 Redesign) */}
             <div className="space-y-2 shrink-0">
-              <span className="text-[8px] text-slate-400 uppercase tracking-wider block font-black">Select Wayfinding Route</span>
+              <span className="text-[8.5px] text-stadium-gold uppercase tracking-wider block font-black">⭐ Recommended Route</span>
               
               {/* Route A Card */}
               <button
@@ -474,7 +587,6 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                 }`}
               >
                 <div className="flex items-center space-x-2.5">
-                  {/* Radio button circle */}
                   <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
                     isClear ? 'border-emerald-400' : 'border-slate-600'
                   }`}>
@@ -484,14 +596,16 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                     <div className={`text-[10px] font-black transition-colors ${isClear ? 'text-emerald-400' : 'text-slate-200'}`}>
                       Route A (Concourse Walkway)
                     </div>
-                    <div className="text-[8px] text-slate-400 mt-0.5 font-medium">Follows the main elliptical corridor</div>
+                    <div className="text-[8px] text-slate-400 mt-0.5 font-medium">🟢 Low Crowd | ♿ Accessible | 🚶 Easy walking</div>
                   </div>
                 </div>
                 <div className="text-right font-mono shrink-0 pl-2">
-                  <div className="text-[10px] font-black text-emerald-400">🟢 {activeTarget.capacity}% Crowd</div>
-                  <div className="text-[8px] text-slate-400 mt-0.5">1 min walk</div>
+                  <div className="text-[10px] font-black text-emerald-400">1 min</div>
+                  <div className="text-[8px] text-slate-400 mt-0.5">ETA</div>
                 </div>
               </button>
+
+              <span className="text-[8.5px] text-slate-400 uppercase tracking-wider block font-black pt-1">Other routes</span>
 
               {/* Route B Card */}
               <button
@@ -503,7 +617,6 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                 }`}
               >
                 <div className="flex items-center space-x-2.5">
-                  {/* Radio button circle */}
                   <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
                     !isClear ? 'border-red-400' : 'border-slate-600'
                   }`}>
@@ -513,14 +626,51 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                     <div className={`text-[10px] font-black transition-colors ${!isClear ? 'text-red-400' : 'text-slate-200'}`}>
                       Route B (Seating Shortcut)
                     </div>
-                    <div className="text-[8px] text-slate-400 mt-0.5 font-medium">Cuts straight through spectator rows</div>
+                    <div className="text-[8px] text-slate-400 mt-0.5 font-medium">🔴 88% Crowd | ⚠️ High Congestion</div>
                   </div>
                 </div>
                 <div className="text-right font-mono shrink-0 pl-2">
-                  <div className="text-[10px] font-black text-red-400">🔴 88% Crowd</div>
-                  <div className="text-[8px] text-slate-400 mt-0.5">3 mins walk</div>
+                  <div className="text-[10px] font-black text-red-400">3 mins</div>
+                  <div className="text-[8px] text-slate-400 mt-0.5">ETA</div>
                 </div>
               </button>
+            </div>
+
+            {/* Start Live Navigation Action Button (Phase 24) */}
+            <button
+              onClick={() => setNavigationActive(prev => ({ ...prev, [msgId]: true }))}
+              className={`w-full py-2.5 rounded-xl font-black uppercase text-[10px] tracking-wider transition-all duration-300 shadow cursor-pointer text-center ${
+                isClear 
+                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_4px_10px_rgba(16,185,129,0.2)]' 
+                  : 'bg-red-600 hover:bg-red-500 text-white shadow-[0_4px_10px_rgba(239,68,68,0.2)]'
+              }`}
+            >
+              Start Live Navigation
+            </button>
+
+            {/* Live Crowd Density Intelligence */}
+            <div className="bg-slate-950/50 rounded-xl p-2.5 border border-slate-800/80 space-y-1.5 text-[9px] font-sans">
+              <div className="flex justify-between items-center">
+                <span className="text-[7.5px] text-slate-400 uppercase tracking-wide font-black">Gate Crowd Density status</span>
+                <span className="px-1 py-0.5 rounded bg-blue-950 text-blue-400 font-extrabold text-[6px]">AI Operations</span>
+              </div>
+              <div className="grid grid-cols-3 gap-1 text-[8px] font-mono text-center">
+                <div className="p-1 rounded bg-slate-900 border border-slate-800/80">
+                  <span className="text-slate-500 block text-[6.5px]">Gate A</span>
+                  <span className="text-emerald-400 font-bold">🟢 Low (12%)</span>
+                </div>
+                <div className="p-1 rounded bg-slate-900 border border-slate-800/80">
+                  <span className="text-slate-500 block text-[6.5px]">Gate B</span>
+                  <span className="text-amber-400 font-bold">🟡 Mid (45%)</span>
+                </div>
+                <div className="p-1 rounded bg-slate-900 border border-slate-800/80">
+                  <span className="text-slate-500 block text-[6.5px]">Gate C</span>
+                  <span className="text-red-400 font-bold">🔴 High (88%)</span>
+                </div>
+              </div>
+              <div className="p-2 rounded bg-amber-500/5 border border-amber-500/20 text-slate-300 text-[8.5px] leading-snug">
+                <strong>🤖 AI Suggestion:</strong> Avoid Gate C. Expected delay: 4 minutes due to bottleneck. Concourse Route A bypasses this zone.
+              </div>
             </div>
 
             {/* Back button and alternate details */}
