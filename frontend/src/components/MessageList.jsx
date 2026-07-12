@@ -16,6 +16,158 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
   // Map suggested routing states (Phase 19)
   const [mapViews, setMapViews] = useState({}); // Stores 'seating' or 'suggested' keyed by messageId
   const [mapRoutes, setMapRoutes] = useState({}); // Stores 'clear' or 'main' keyed by messageId
+  const [selectedTargets, setSelectedTargets] = useState({}); // Stores selected target index keyed by messageId
+
+  const getRestroomsForSection = (sec) => {
+    const s = sec.trim();
+    if (s === "104") {
+      return [
+        {
+          id: "rr_1",
+          x: 28,
+          y: 28,
+          capacity: 15,
+          color: "#10b981", // Green
+          label: "Restroom A (Sec 104)",
+          directions: [
+            "Exit Section 104 seating tunnel.",
+            "Walk straight 10 meters into the west concourse.",
+            "Take a right at the beverage kiosk.",
+            "Restroom is 5 meters ahead on your left."
+          ]
+        },
+        {
+          id: "rr_2",
+          x: 22,
+          y: 65,
+          capacity: 68,
+          color: "#f97316", // Orange
+          label: "Restroom B (Sec 128)",
+          directions: [
+            "Exit Section 104 seating tunnel.",
+            "Walk straight for 35 meters down the concourse hallway.",
+            "Turn right at the Bud's Burger counter.",
+            "The restroom is on your left next to the elevator lobby."
+          ]
+        }
+      ];
+    }
+    // Default to Section 112 restrooms
+    return [
+      {
+        id: "rr_1",
+        x: 70,
+        y: 72,
+        capacity: 20,
+        color: "#10b981", // Green
+        label: "Restroom A (Sec 112)",
+        directions: [
+          "Leave Section 112 seating tunnel.",
+          "Go straight 10 meters towards the main concourse corridor.",
+          "Turn right at Nonna's Pizza counter.",
+          "The restroom entry is on your left next to Elevator B."
+        ]
+      },
+      {
+        id: "rr_2",
+        x: 52,
+        y: 80,
+        capacity: 55,
+        color: "#f97316", // Orange
+        label: "Restroom B (Sec 120)",
+        directions: [
+          "Exit Section 112 seating area.",
+          "Walk straight for 15 meters on the lower corridor.",
+          "Take a left at Bud's Burger stand.",
+          "Go straight for 10 meters; restroom is opposite Section 120."
+        ]
+      },
+      {
+        id: "rr_3",
+        x: 82,
+        y: 55,
+        capacity: 85,
+        color: "#ef4444", // Red
+        label: "Restroom C (Gate C)",
+        directions: [
+          "Exit Section 112 and enter the concourse walkway.",
+          "Walk straight 25 meters past the apparel store.",
+          "Turn left at the Gate C ticket checkpoints.",
+          "The restroom is on the right, next to the first aid booth."
+        ]
+      }
+    ];
+  };
+
+  const getTargetsForSection = (sec, target) => {
+    const s = sec.trim();
+    const t = target.trim().toLowerCase();
+
+    if (t === 'restroom' || t === 'toilet' || t === 'bathroom' || t === 'wc') {
+      return getRestroomsForSection(sec);
+    }
+    
+    if (t === 'pizza' || t === 'food') {
+      return [
+        {
+          id: "fd_1",
+          x: 80,
+          y: 65,
+          capacity: 70,
+          color: "#f97316", // Orange
+          label: "Nonna's Pizza (Sec 114)",
+          directions: [
+            "Exit your seating section and head right.",
+            "Walk 15 meters down the main corridor.",
+            "Nonna's Pizza is right next to Restroom A."
+          ]
+        },
+        {
+          id: "fd_2",
+          x: 20,
+          y: 80,
+          capacity: 10,
+          color: "#10b981", // Green
+          label: "Nonna's Pizza (Sec 324)",
+          directions: [
+            "Exit section corridor and take the nearest elevator to Level 3.",
+            "Turn left upon exiting the elevator lobby.",
+            "Nonna's Pizza Stand is 10 meters straight ahead."
+          ]
+        }
+      ];
+    }
+
+    // Default target list (e.g. Elevators, Gate C)
+    return [
+      {
+        id: "tg_1",
+        x: 72,
+        y: 68,
+        capacity: 40,
+        color: "#eab308", // Yellow
+        label: "Elevator Lobby (Sec 112)",
+        directions: [
+          "Exit seating sector 112 corridor.",
+          "Walk 8 meters straight towards the West Lobby entrance.",
+          "Elevator shafts are located immediately behind the information desk."
+        ]
+      },
+      {
+        id: "tg_2",
+        x: 78,
+        y: 62,
+        capacity: 90,
+        color: "#ef4444", // Red
+        label: "Gate C Exit Outflow",
+        directions: [
+          "Follow the exit signs out of the seating section.",
+          "Proceed straight for 30 meters past the food concessions.",
+          "Gate C portals are straight ahead through the security arches."
+        ]
+      }
+    ];
+  };
 
   const scrollToBottom = () => {
     if (containerRef.current) {
@@ -379,6 +531,13 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
       }
 
       // Default Seating Map View
+      const targetsList = getTargetsForSection(section, target);
+      const selectedIndex = selectedTargets[msgId] !== undefined ? selectedTargets[msgId] : 0;
+      const activeTarget = targetsList[selectedIndex] || targetsList[0] || targetCoord;
+
+      const activePathD = getPathData(start.x, start.y, activeTarget.x, activeTarget.y);
+      const activeEmoji = activeTarget.label.split(' ')[0];
+
       return (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 my-2.5 shadow-xl space-y-3.5 max-w-sm select-none text-slate-100 font-sans">
           <div className="flex justify-between items-center border-b border-slate-800 pb-2">
@@ -446,7 +605,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                 </defs>
                 {/* Thick glow background */}
                 <path 
-                  d={pathD} 
+                  d={activePathD} 
                   fill="none" 
                   stroke="#3b82f6" 
                   strokeWidth="5" 
@@ -456,7 +615,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                 />
                 {/* Main solid line */}
                 <path 
-                  d={pathD} 
+                  d={activePathD} 
                   fill="none" 
                   stroke="#2563eb" 
                   strokeWidth="2.5" 
@@ -465,7 +624,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                 />
                 {/* Dash animation overlay */}
                 <path 
-                  d={pathD} 
+                  d={activePathD} 
                   fill="none" 
                   stroke="#ffffff" 
                   strokeWidth="1.2" 
@@ -495,38 +654,78 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                 </span>
               </div>
 
-              {/* Destination Red Teardrop Map Pin (Upright Stand - translateZ(36px)) */}
-              <div 
-                style={{ 
-                  left: `${targetCoord.x}%`, 
-                  top: `${targetCoord.y}%`,
-                  transform: 'translate3d(-50%, -85%, 36px) rotateZ(45deg) rotateX(-55deg)',
-                  transformStyle: 'preserve-3d'
-                }} 
-                className="absolute z-10 flex flex-col items-center"
-              >
-                <div className="relative w-8 h-10 flex items-center justify-center">
-                  {/* Google Red Teardrop pin */}
-                  <svg className="absolute inset-0 w-full h-full text-red-500 filter drop-shadow-md" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
-                  </svg>
-                  {/* White circle inside holding the target emoji asset */}
-                  <div className="absolute top-[6px] w-[18px] h-[18px] rounded-full bg-white flex items-center justify-center text-[10px] z-10 shadow-sm">
-                    {targetEmoji}
-                  </div>
-                </div>
-                <span className="mt-0.5 px-1.5 py-0.5 bg-red-600/95 text-white text-[6.5px] font-black rounded uppercase tracking-wider whitespace-nowrap select-none pointer-events-none shadow">
-                  Goal
-                </span>
-              </div>
+              {/* Destination Red/Orange/Yellow/Green Teardrop Map Pins (Upright Stand - translateZ(36px)) */}
+              {targetsList.map((tg, idx) => {
+                const isCurrentActive = idx === selectedIndex;
+                const emoji = tg.label.split(' ')[0];
+                return (
+                  <button 
+                    key={tg.id}
+                    onClick={() => {
+                      setSelectedTargets(prev => ({
+                        ...prev,
+                        [msgId]: idx
+                      }));
+                    }}
+                    style={{ 
+                      left: `${tg.x}%`, 
+                      top: `${tg.y}%`,
+                      transform: `translate3d(-50%, -85%, 36px) rotateZ(45deg) rotateX(-55deg) scale(${isCurrentActive ? 1.15 : 0.95})`,
+                      transformStyle: 'preserve-3d',
+                      transition: 'transform 0.25s ease-out'
+                    }} 
+                    className="absolute z-20 flex flex-col items-center cursor-pointer pointer-events-auto group outline-none"
+                    title={`${tg.label} (${tg.capacity}% crowd)`}
+                  >
+                    <div className="relative w-8 h-10 flex items-center justify-center">
+                      {/* Teardrop pin wrapper colored dynamically based on crowd level */}
+                      <svg 
+                        style={{ color: tg.color }}
+                        className={`absolute inset-0 w-full h-full filter drop-shadow-md transition-all duration-300 ${isCurrentActive ? 'opacity-100 scale-110' : 'opacity-85 group-hover:opacity-100 group-hover:scale-105'}`} 
+                        viewBox="0 0 24 24" 
+                        fill="currentColor"
+                      >
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                      </svg>
+                      {/* White center holding the target emoji */}
+                      <div className="absolute top-[6.5px] w-[18px] h-[18px] rounded-full bg-white flex items-center justify-center text-[10px] z-10 shadow-sm">
+                        {emoji}
+                      </div>
+                      
+                      {/* Crowd capacity bubble overlay */}
+                      <div className="absolute -top-3.5 px-1 rounded bg-slate-950 border border-slate-700 text-[6.5px] font-black text-slate-200 shadow-sm leading-tight whitespace-nowrap">
+                        {tg.capacity}%
+                      </div>
+                    </div>
+                    {isCurrentActive && (
+                      <span className="mt-0.5 px-1.5 py-0.5 bg-slate-900/90 text-stadium-gold border border-stadium-gold/30 text-[5.5px] font-black rounded uppercase tracking-widest whitespace-nowrap select-none pointer-events-none shadow-md">
+                        Selected
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
+          </div>
+
+          {/* Step-by-Step Directions Guide */}
+          <div className="bg-slate-950/50 rounded-xl p-3 border border-slate-800/80 text-[10px] space-y-1.5 shrink-0 max-h-[85px] overflow-y-auto custom-scrollbar font-mono leading-normal text-slate-300">
+            <span className="text-[8px] text-stadium-gold uppercase tracking-wider block font-black border-b border-slate-800 pb-1">
+              🚶‍♂️ Turn-by-Turn Navigation Guide (Start: Sec {section})
+            </span>
+            {activeTarget.directions.map((step, sidx) => (
+              <div key={sidx} className="flex items-start space-x-1.5">
+                <span className="text-stadium-gold shrink-0 font-bold">{sidx + 1}.</span>
+                <span>{step}</span>
+              </div>
+            ))}
           </div>
 
           {/* Route info legend footer */}
           <div className="flex justify-between items-center text-[10px] font-mono bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/60 leading-tight">
             <div>
               <span className="text-slate-400 block uppercase text-[8px] tracking-wide font-black">Target Location</span>
-              <span className="font-bold text-slate-200">{targetCoord.label}</span>
+              <span className="font-bold text-slate-200">{activeTarget.label}</span>
             </div>
             <div className="text-right border-l border-slate-800 pl-3 flex items-center space-x-2">
               <div>
