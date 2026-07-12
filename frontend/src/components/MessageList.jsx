@@ -351,7 +351,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
 
         if (isNavigating) {
           return (
-            <div className="bg-slate-900 border border-red-500/40 rounded-2xl p-4 my-2.5 shadow-xl space-y-3.5 max-w-sm select-none text-slate-100 font-sans animate-in zoom-in duration-200">
+            <div className="w-full max-w-sm bg-slate-900 border border-red-500/40 rounded-2xl p-4 my-2.5 shadow-xl space-y-3.5 select-none text-slate-100 font-sans animate-in zoom-in duration-200">
               <div className="flex justify-between items-center border-b border-slate-800 pb-2">
                 <div className="flex items-center space-x-1.5 text-red-500 font-black uppercase tracking-wider text-xs animate-pulse">
                   <div className="w-2 h-2 rounded-full bg-red-500 animate-ping mr-1"></div>
@@ -473,7 +473,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                   </div>
                   <button 
                     onClick={() => setNavigationActive(prev => ({ ...prev, [msgId]: false }))}
-                    className="px-3 py-1.5 rounded-lg bg-red-950 border border-red-500/30 hover:bg-red-900/50 text-red-200 text-[9px] font-black uppercase tracking-wider cursor-pointer shadow transition-all"
+                    className="py-2.5 px-4 sm:py-1.5 sm:px-3 rounded-lg bg-red-950 border border-red-500/30 hover:bg-red-900/50 text-red-200 text-[9px] font-black uppercase tracking-wider cursor-pointer shadow transition-all"
                   >
                     Stop Navigation
                   </button>
@@ -484,7 +484,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
         }
 
         return (
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 my-2.5 shadow-xl space-y-3.5 max-w-sm select-none text-slate-100 font-sans">
+          <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-4 my-2.5 shadow-xl space-y-3.5 select-none text-slate-100 font-sans">
             <div className="flex justify-between items-center border-b border-slate-800 pb-2">
               <div className="flex items-center space-x-1.5 text-stadium-gold font-bold uppercase tracking-wider text-xs">
                 <MapPin className="w-4 h-4 text-stadium-gold" />
@@ -580,7 +580,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
               {/* Route A Card */}
               <button
                 onClick={() => selectRoute('clear')}
-                className={`w-full flex items-center justify-between p-2.5 rounded-xl border text-left cursor-pointer transition-all duration-300 outline-none ${
+                className={`w-full flex items-center justify-between py-3 px-3.5 sm:py-2.5 sm:px-3 rounded-xl border text-left cursor-pointer transition-all duration-300 outline-none ${
                   isClear
                     ? 'border-emerald-500 bg-emerald-500/10 shadow-[0_0_12px_rgba(16,185,129,0.08)]'
                     : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
@@ -610,7 +610,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
               {/* Route B Card */}
               <button
                 onClick={() => selectRoute('main')}
-                className={`w-full flex items-center justify-between p-2.5 rounded-xl border text-left cursor-pointer transition-all duration-300 outline-none ${
+                className={`w-full flex items-center justify-between py-3 px-3.5 sm:py-2.5 sm:px-3 rounded-xl border text-left cursor-pointer transition-all duration-300 outline-none ${
                   !isClear
                     ? 'border-red-500 bg-red-500/10 shadow-[0_0_12px_rgba(239,68,68,0.08)]'
                     : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
@@ -639,7 +639,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
             {/* Start Live Navigation Action Button (Phase 24) */}
             <button
               onClick={() => setNavigationActive(prev => ({ ...prev, [msgId]: true }))}
-              className={`w-full py-2.5 rounded-xl font-black uppercase text-[10px] tracking-wider transition-all duration-300 shadow cursor-pointer text-center ${
+              className={`w-full py-3.5 sm:py-2.5 rounded-xl font-black uppercase text-[10px] tracking-wider transition-all duration-300 shadow cursor-pointer text-center ${
                 isClear 
                   ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_4px_10px_rgba(16,185,129,0.2)]' 
                   : 'bg-red-600 hover:bg-red-500 text-white shadow-[0_4px_10px_rgba(239,68,68,0.2)]'
@@ -683,7 +683,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
               </div>
               <button 
                 onClick={toggleView}
-                className="px-2 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold uppercase text-[9px] cursor-pointer shadow transition-all"
+                className="py-2.5 px-3 sm:py-1.5 sm:px-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold uppercase text-[9px] cursor-pointer shadow transition-all"
               >
                 Back to Seats
               </button>
@@ -696,7 +696,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
       const activePathD = getPathData(start.x, start.y, activeTarget.x, activeTarget.y);
 
       return (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 my-2.5 shadow-xl space-y-3.5 max-w-sm select-none text-slate-100 font-sans">
+        <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-4 my-2.5 shadow-xl space-y-3.5 select-none text-slate-100 font-sans">
           <div className="flex justify-between items-center border-b border-slate-800 pb-2">
             <div className="flex items-center space-x-1.5 text-stadium-gold font-bold uppercase tracking-wider text-xs">
               <MapPin className="w-4 h-4 text-stadium-gold" />
@@ -871,7 +871,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
               </div>
               <button 
                 onClick={toggleView}
-                className="px-2.5 py-1.5 rounded-xl bg-stadium-gold hover:bg-stadium-gold-light text-stadium-navy-deep font-black uppercase text-[9px] cursor-pointer shadow transition-all ml-2.5 shrink-0"
+                className="py-2.5 px-3.5 sm:py-1.5 sm:px-2.5 rounded-xl bg-stadium-gold hover:bg-stadium-gold-light text-stadium-navy-deep font-black uppercase text-[9px] cursor-pointer shadow transition-all ml-2.5 shrink-0"
               >
                 Suggest Route
               </button>
@@ -888,7 +888,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
     if (receiptMatch) {
       const [_, id, itemName, qty, price, type, section, eta] = receiptMatch;
       return (
-        <div className="bg-white border-2 border-dashed border-slate-300 text-slate-800 rounded-xl p-4 my-2 shadow-lg space-y-4 max-w-sm font-mono text-xs select-none">
+        <div className="w-full max-w-sm bg-white border-2 border-dashed border-slate-300 text-slate-800 rounded-xl p-4 my-2 shadow-lg space-y-4 font-mono text-xs select-none">
           <div className="flex justify-between items-center border-b border-slate-200 pb-2">
             <div className="flex items-center space-x-1.5 text-slate-900 font-bold uppercase tracking-wider">
               <Receipt className="w-4 h-4 text-stadium-gold-dark" />
@@ -955,7 +955,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
       const isArg = teamName.trim() === 'Argentina';
 
       return (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 my-2 shadow-xl space-y-4 max-w-sm select-none text-slate-100">
+        <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-4 my-2 shadow-xl space-y-4 select-none text-slate-100">
           <div className="flex justify-between items-center border-b border-slate-800 pb-2">
             <div className="flex items-center space-x-1.5 text-stadium-gold font-bold uppercase tracking-wider text-xs">
               <ShoppingBag className="w-4 h-4 text-stadium-gold" />

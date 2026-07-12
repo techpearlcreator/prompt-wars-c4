@@ -48,7 +48,7 @@ export default function AnalyticsDashboard({ onClose, t, matchId }) {
       <section 
         id="analytics-dashboard"
         aria-label={t.dashboardTitle}
-        className="w-full max-w-xl bg-stadium-navy-card rounded-3xl border border-stadium-navy-light shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in-95 duration-200"
+        className="w-full max-w-xl bg-stadium-navy-card rounded-3xl border border-stadium-navy-light shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[85vh] animate-in fade-in zoom-in-95 duration-200"
       >
         {/* Header */}
         <header className="flex justify-between items-center px-6 py-4 bg-stadium-navy-bubble border-b border-stadium-navy-light/60">
@@ -74,7 +74,7 @@ export default function AnalyticsDashboard({ onClose, t, matchId }) {
         </header>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto custom-scrollbar space-y-5 flex-1">
+        <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar space-y-5 flex-1">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-12 space-y-3">
               <div className="w-8 h-8 rounded-full border-4 border-stadium-navy-light border-t-stadium-gold animate-spin"></div>
@@ -87,7 +87,7 @@ export default function AnalyticsDashboard({ onClose, t, matchId }) {
           ) : (
             <>
               {/* Stat grid */}
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="bg-stadium-navy-deep border border-stadium-navy-light/50 p-4 rounded-2xl text-center space-y-1">
                   <Shield className="w-5 h-5 text-stadium-gold mx-auto opacity-80" />
                   <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">{t.totalQuestions}</p>
