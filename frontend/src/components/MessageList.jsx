@@ -356,32 +356,6 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
               <span className="text-[10px] text-slate-400 font-semibold truncate max-w-[130px]">{venue}</span>
             </div>
 
-            {/* Route Options Tabs */}
-            <div className="flex gap-2 text-[10px] font-bold shrink-0">
-              <button
-                onClick={() => selectRoute('clear')}
-                className={`flex-1 p-2.5 rounded-xl border transition-all text-center cursor-pointer ${
-                  isClear
-                    ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400'
-                    : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <div className="uppercase text-[8px] opacity-75">Route A: Concourse Walkway</div>
-                <div className="font-extrabold text-[11px] mt-0.5">🟢 {activeTarget.capacity}% Crowd (Fast)</div>
-              </button>
-              <button
-                onClick={() => selectRoute('main')}
-                className={`flex-1 p-2.5 rounded-xl border transition-all text-center cursor-pointer ${
-                  !isClear
-                    ? 'border-red-500 bg-red-500/10 text-red-400'
-                    : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <div className="uppercase text-[8px] opacity-75">Route B: Seating Shortcut</div>
-                <div className="font-extrabold text-[11px] mt-0.5">🔴 88% Crowd (3m)</div>
-              </button>
-            </div>
-
             {/* Graphical Vector Concourse Map */}
             <div className="relative w-full h-[230px] bg-slate-950/90 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center">
               {/* Grid Background */}
@@ -407,24 +381,31 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                 <line x1="115" y1="162" x2="95" y2="173" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
                 <line x1="285" y1="78" x2="305" y2="67" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
 
-                {/* Dynamic path along concourse/shortcuts */}
+                {/* Route A Path (Green Concourse) - Always Visible */}
                 <path 
-                  d={activePath} 
+                  d={routeAPath} 
                   fill="none" 
-                  stroke={isClear ? "#3b82f6" : "#f87171"} 
-                  strokeWidth="5" 
+                  stroke="#10b981" 
+                  strokeWidth="4" 
                   strokeLinecap="round" 
                   strokeLinejoin="round" 
-                  opacity="0.3" 
+                  opacity={isClear ? "0.85" : "0.25"} 
+                  className="transition-opacity duration-300"
                 />
+
+                {/* Route B Path (Red Shortcut) - Always Visible */}
                 <path 
-                  d={activePath} 
+                  d={routeBPath} 
                   fill="none" 
-                  stroke={isClear ? "#2563eb" : "#dc2626"} 
-                  strokeWidth="2.5" 
+                  stroke="#ef4444" 
+                  strokeWidth="4" 
                   strokeLinecap="round" 
                   strokeLinejoin="round" 
+                  opacity={!isClear ? "0.85" : "0.25"} 
+                  className="transition-opacity duration-300"
                 />
+
+                {/* Animated white crawling dash overlay on active route */}
                 <path 
                   d={activePath} 
                   fill="none" 
@@ -477,6 +458,69 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                 <span className="text-slate-400 uppercase text-[7px] block">Destination</span>
                 <span className="font-bold text-slate-200">{activeTarget.label.split(' ')[1]}</span>
               </div>
+            </div>
+
+            {/* Premium Route Options Stacked Selector */}
+            <div className="space-y-2 shrink-0">
+              <span className="text-[8px] text-slate-400 uppercase tracking-wider block font-black">Select Wayfinding Route</span>
+              
+              {/* Route A Card */}
+              <button
+                onClick={() => selectRoute('clear')}
+                className={`w-full flex items-center justify-between p-2.5 rounded-xl border text-left cursor-pointer transition-all duration-300 outline-none ${
+                  isClear
+                    ? 'border-emerald-500 bg-emerald-500/10 shadow-[0_0_12px_rgba(16,185,129,0.08)]'
+                    : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-center space-x-2.5">
+                  {/* Radio button circle */}
+                  <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+                    isClear ? 'border-emerald-400' : 'border-slate-600'
+                  }`}>
+                    {isClear && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>}
+                  </div>
+                  <div>
+                    <div className={`text-[10px] font-black transition-colors ${isClear ? 'text-emerald-400' : 'text-slate-200'}`}>
+                      Route A (Concourse Walkway)
+                    </div>
+                    <div className="text-[8px] text-slate-400 mt-0.5 font-medium">Follows the main elliptical corridor</div>
+                  </div>
+                </div>
+                <div className="text-right font-mono shrink-0 pl-2">
+                  <div className="text-[10px] font-black text-emerald-400">🟢 {activeTarget.capacity}% Crowd</div>
+                  <div className="text-[8px] text-slate-400 mt-0.5">1 min walk</div>
+                </div>
+              </button>
+
+              {/* Route B Card */}
+              <button
+                onClick={() => selectRoute('main')}
+                className={`w-full flex items-center justify-between p-2.5 rounded-xl border text-left cursor-pointer transition-all duration-300 outline-none ${
+                  !isClear
+                    ? 'border-red-500 bg-red-500/10 shadow-[0_0_12px_rgba(239,68,68,0.08)]'
+                    : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-center space-x-2.5">
+                  {/* Radio button circle */}
+                  <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+                    !isClear ? 'border-red-400' : 'border-slate-600'
+                  }`}>
+                    {!isClear && <div className="w-1.5 h-1.5 rounded-full bg-red-400"></div>}
+                  </div>
+                  <div>
+                    <div className={`text-[10px] font-black transition-colors ${!isClear ? 'text-red-400' : 'text-slate-200'}`}>
+                      Route B (Seating Shortcut)
+                    </div>
+                    <div className="text-[8px] text-slate-400 mt-0.5 font-medium">Cuts straight through spectator rows</div>
+                  </div>
+                </div>
+                <div className="text-right font-mono shrink-0 pl-2">
+                  <div className="text-[10px] font-black text-red-400">🔴 88% Crowd</div>
+                  <div className="text-[8px] text-slate-400 mt-0.5">3 mins walk</div>
+                </div>
+              </button>
             </div>
 
             {/* Back button and alternate details */}
