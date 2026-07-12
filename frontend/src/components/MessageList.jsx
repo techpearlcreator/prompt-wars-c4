@@ -144,6 +144,8 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
               <span>Wayfinding Seat Map</span>
             </div>
             <span className="text-[10px] text-slate-400 font-semibold truncate max-w-[130px]">{venue}</span>
+          </div>
+
           {/* 3D Isometric Stadium Map Diagram */}
           <div 
             className="relative w-full h-[210px] bg-slate-950/70 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center"
