@@ -7,168 +7,645 @@ import { sendMessageFeedback, submitTriviaAnswer } from '../services/api';
  * MessageList Component
  * Displays the scrollable message thread with interactive poll cards, live trivia cards, receipt invoices, custom jerseys, and RAG wayfinding decorators.
  */
-export default function MessageList({ messages, isTyping, ratingThanksText, matchId }) {
-  const containerRef = useRef(null);
-  const [ratedMessages, setRatedMessages] = useState({});
-  const [pollVotes, setPollVotes] = useState({});
-  const [triviaVotes, setTriviaVotes] = useState({}); // maps questionId -> { selectedIndex, correctIndex, isCorrect }
 
-  // Map suggested routing states (Phase 19)
-  const [mapViews, setMapViews] = useState({}); // Stores 'seating' or 'suggested' keyed by messageId
-  const [mapRoutes, setMapRoutes] = useState({}); // Stores 'clear' or 'main' keyed by messageId
-  const [selectedTargets, setSelectedTargets] = useState({}); // Stores selected target index keyed by messageId
-  const [navigationActive, setNavigationActive] = useState({}); // { [msgId]: boolean }
+const sectionCoordsMap = {
+  "112": { x: 75, y: 70, label: "Section 112" },
+  "104": { x: 25, y: 30, label: "Section 104" },
+  "128": { x: 25, y: 75, label: "Section 128" },
+  "143": { x: 75, y: 25, label: "Section 143" }
+};
 
-  const getRestroomsForSection = (sec) => {
-    const s = sec.trim();
-    if (s === "104") {
-      return [
-        {
-          id: "rr_1",
-          x: 28,
-          y: 28,
-          capacity: 15,
-          color: "#10b981", // Green
-          label: "Restroom A (Sec 104)",
-          directions: [
-            "Exit Section 104 seating tunnel.",
-            "Walk straight 10 meters into the west concourse.",
-            "Take a right at the beverage kiosk.",
-            "Restroom is 5 meters ahead on your left."
-          ]
-        },
-        {
-          id: "rr_2",
-          x: 22,
-          y: 65,
-          capacity: 68,
-          color: "#f97316", // Orange
-          label: "Restroom B (Sec 128)",
-          directions: [
-            "Exit Section 104 seating tunnel.",
-            "Walk straight for 35 meters down the concourse hallway.",
-            "Turn right at the Bud's Burger counter.",
-            "The restroom is on your left next to the elevator lobby."
-          ]
-        }
-      ];
-    }
-    // Default to Section 112 restrooms
+const targetCoordsMap = {
+  "restroom": { x: 70, y: 72, label: "🚻 Restroom (Sec 112)" },
+  "restroom_104": { x: 28, y: 28, label: "🚻 Restroom (Sec 104)" },
+  "pizza": { x: 80, y: 65, label: "🍕 Pizza Stand (Sec 114)" },
+  "pizza_324": { x: 20, y: 80, label: "🍕 Pizza Stand (Sec 324)" },
+  "elevator": { x: 72, y: 68, label: "🛗 Elevator (Sec 112)" },
+  "gate_c": { x: 78, y: 62, label: "🚧 Gate C Outflow" }
+};
+
+const getRestroomsForSection = (sec) => {
+  const s = sec.trim();
+  if (s === "104") {
     return [
       {
         id: "rr_1",
-        x: 70,
-        y: 72,
-        capacity: 20,
+        x: 28,
+        y: 28,
+        capacity: 15,
         color: "#10b981", // Green
-        label: "Restroom A (Sec 112)",
+        label: "🚻 Restroom A (Sec 104)",
         directions: [
-          "Leave Section 112 seating tunnel.",
-          "Go straight 10 meters towards the main concourse corridor.",
-          "Turn right at Nonna's Pizza counter.",
-          "The restroom entry is on your left next to Elevator B."
+          "Exit Section 104 seating tunnel.",
+          "Walk straight 10 meters into the west concourse.",
+          "Take a right at the beverage kiosk.",
+          "Restroom is 5 meters ahead on your left."
         ]
       },
       {
         id: "rr_2",
-        x: 52,
-        y: 80,
-        capacity: 55,
+        x: 22,
+        y: 65,
+        capacity: 68,
         color: "#f97316", // Orange
-        label: "Restroom B (Sec 120)",
+        label: "🚻 Restroom B (Sec 128)",
         directions: [
-          "Exit Section 112 seating area.",
-          "Walk straight for 15 meters on the lower corridor.",
-          "Take a left at Bud's Burger stand.",
-          "Go straight for 10 meters; restroom is opposite Section 120."
+          "Exit Section 104 corridor.",
+          "Take a left at the exit lobby.",
+          "Walk straight 15 meters to Section 128.",
+          "Restroom is opposite Section 128 seating entry."
         ]
       },
       {
         id: "rr_3",
         x: 82,
         y: 55,
-        capacity: 85,
+        capacity: 88,
         color: "#ef4444", // Red
-        label: "Restroom C (Gate C)",
+        label: "🚻 Restroom C (Sec 112)",
         directions: [
-          "Exit Section 112 and enter the concourse walkway.",
-          "Walk straight 25 meters past the apparel store.",
-          "Turn left at the Gate C ticket checkpoints.",
-          "The restroom is on the right, next to the first aid booth."
+          "Exit Section 104 seating portal.",
+          "Walk straight to the main concourse walkways.",
+          "Follow the concourse corridor around to Section 112.",
+          "Restroom is next to the elevator lobby."
         ]
       }
     ];
-  };
-
-  const getTargetsForSection = (sec, target) => {
-    const s = sec.trim();
-    const t = target.trim().toLowerCase();
-
-    if (t === 'restroom' || t === 'toilet' || t === 'bathroom' || t === 'wc') {
-      return getRestroomsForSection(sec);
+  }
+  // Default to Section 112 restrooms
+  return [
+    {
+      id: "rr_1",
+      x: 70,
+      y: 72,
+      capacity: 20,
+      color: "#10b981", // Green
+      label: "🚻 Restroom A (Sec 112)",
+      directions: [
+        "Leave Section 112 seating tunnel.",
+        "Go straight 10 meters towards the main concourse corridor.",
+        "Turn right at Nonna's Pizza counter.",
+        "The restroom entry is on your left next to Elevator B."
+      ]
+    },
+    {
+      id: "rr_2",
+      x: 52,
+      y: 80,
+      capacity: 55,
+      color: "#f97316", // Orange
+      label: "🚻 Restroom B (Sec 120)",
+      directions: [
+        "Exit Section 112 seating area.",
+        "Walk straight for 15 meters on the lower corridor.",
+        "Take a left at Bud's Burger stand.",
+        "Go straight for 10 meters; restroom is opposite Section 120."
+      ]
+    },
+    {
+      id: "rr_3",
+      x: 82,
+      y: 55,
+      capacity: 85,
+      color: "#ef4444", // Red
+      label: "🚻 Restroom C (Gate C)",
+      directions: [
+        "Exit Section 112 and enter the concourse walkway.",
+        "Walk straight 25 meters past the apparel store.",
+        "Turn left at the Gate C ticket checkpoints.",
+        "The restroom is on the right, next to the first aid booth."
+      ]
     }
-    
-    if (t === 'pizza' || t === 'food') {
-      return [
-        {
-          id: "fd_1",
-          x: 80,
-          y: 65,
-          capacity: 70,
-          color: "#f97316", // Orange
-          label: "Nonna's Pizza (Sec 114)",
-          directions: [
-            "Exit your seating section and head right.",
-            "Walk 15 meters down the main corridor.",
-            "Nonna's Pizza is right next to Restroom A."
-          ]
-        },
-        {
-          id: "fd_2",
-          x: 20,
-          y: 80,
-          capacity: 10,
-          color: "#10b981", // Green
-          label: "Nonna's Pizza (Sec 324)",
-          directions: [
-            "Exit section corridor and take the nearest elevator to Level 3.",
-            "Turn left upon exiting the elevator lobby.",
-            "Nonna's Pizza Stand is 10 meters straight ahead."
-          ]
-        }
-      ];
-    }
+  ];
+};
 
-    // Default target list (e.g. Elevators, Gate C)
+const getTargetsForSection = (sec, target) => {
+  const s = sec.trim();
+  const t = target.trim().toLowerCase();
+
+  if (t === 'restroom' || t === 'toilet' || t === 'bathroom' || t === 'wc') {
+    return getRestroomsForSection(sec);
+  }
+  
+  if (t === 'pizza' || t === 'food') {
     return [
       {
-        id: "tg_1",
-        x: 72,
-        y: 68,
-        capacity: 40,
-        color: "#eab308", // Yellow
-        label: "Elevator Lobby (Sec 112)",
+        id: "fd_1",
+        x: 80,
+        y: 65,
+        capacity: 70,
+        color: "#f97316", // Orange
+        label: "🍕 Nonna's Pizza (Sec 114)",
         directions: [
-          "Exit seating sector 112 corridor.",
-          "Walk 8 meters straight towards the West Lobby entrance.",
-          "Elevator shafts are located immediately behind the information desk."
+          "Exit your seating section and head right.",
+          "Walk 15 meters down the main corridor.",
+          "Nonna's Pizza is right next to Restroom A."
         ]
       },
       {
-        id: "tg_2",
-        x: 78,
-        y: 62,
-        capacity: 90,
-        color: "#ef4444", // Red
-        label: "Gate C Exit Outflow",
+        id: "fd_2",
+        x: 20,
+        y: 80,
+        capacity: 10,
+        color: "#10b981", // Green
+        label: "🍕 Nonna's Pizza (Sec 324)",
         directions: [
-          "Follow the exit signs out of the seating section.",
-          "Proceed straight for 30 meters past the food concessions.",
-          "Gate C portals are straight ahead through the security arches."
+          "Exit section corridor and take the nearest elevator to Level 3.",
+          "Turn left upon exiting the elevator lobby.",
+          "Nonna's Pizza Stand is 10 meters straight ahead."
         ]
       }
     ];
+  }
+
+  // Default target list (e.g. Elevators, Gate C)
+  return [
+    {
+      id: "tg_1",
+      x: 72,
+      y: 68,
+      capacity: 40,
+      color: "#eab308", // Yellow
+      label: "🛗 Elevator Lobby (Sec 112)",
+      directions: [
+        "Exit seating sector 112 corridor.",
+        "Walk 8 meters straight towards the West Lobby entrance.",
+        "Elevator shafts are located immediately behind the information desk."
+      ]
+    },
+    {
+      id: "tg_2",
+      x: 78,
+      y: 62,
+      capacity: 90,
+      color: "#ef4444", // Red
+      label: "🚧 Gate C Exit Outflow",
+      directions: [
+        "Follow the exit signs out of the seating section.",
+        "Proceed straight for 30 meters past the food concessions.",
+        "Gate C portals are straight ahead through the security arches."
+      ]
+    }
+  ];
+};
+
+const getPathData = (x1, y1, x2, y2) => {
+  const cx = 50;
+  const cy = 50;
+  const mx = (x1 + x2) / 2;
+  const my = (y1 + y2) / 2;
+  const distToCenter = Math.sqrt(Math.pow(mx - cx, 2) + Math.pow(my - cy, 2));
+
+  let ctrlX = mx;
+  let ctrlY = my;
+  if (distToCenter < 28) {
+    const dx = mx - cx;
+    const dy = my - cy;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    ctrlX = cx + (dx / len) * 40;
+    ctrlY = cy + (dy / len) * 34;
+  }
+  return `M ${x1} ${y1} Q ${ctrlX} ${ctrlY} ${x2} ${y2}`;
+};
+
+function WayfindingCard({ msgId, venue, section, start, initialTarget, text, eta, distance }) {
+  const [facilityType, setFacilityType] = useState(() => {
+    const t = initialTarget.trim().toLowerCase();
+    if (t === 'restroom' || t === 'toilet' || t === 'bathroom' || t === 'wc') return 'restroom';
+    if (t === 'pizza' || t === 'food') return 'food';
+    return 'gate';
+  });
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [currentView, setCurrentView] = useState('map'); // 'map' or 'suggested'
+  const [isClear, setIsClear] = useState(true);
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  const handleTypeChange = (type) => {
+    setFacilityType(type);
+    setSelectedIndex(0);
   };
+
+  const targetsList = getTargetsForSection(section, facilityType);
+  const activeTarget = targetsList[selectedIndex] || targetsList[0] || {
+    id: "tg_def",
+    x: 200,
+    y: 120,
+    capacity: 50,
+    color: "#eab308",
+    label: "Facility",
+    directions: ["Exit seating section."]
+  };
+  const activeEmoji = activeTarget.label.split(' ')[0];
+  const targetName = activeTarget.label.split(' ').slice(1).join(' ').split('(')[0].trim() || "Facility";
+
+  const toggleView = () => {
+    setCurrentView(prev => prev === 'map' ? 'suggested' : 'map');
+  };
+
+  const selectRoute = (route) => {
+    setIsClear(route === 'clear');
+  };
+
+  const activePathD = getPathData(start.x, start.y, activeTarget.x, activeTarget.y);
+
+  if (isNavigating) {
+    const activePath = isClear ? activeTarget.pathD || activePathD : (section === "104"
+      ? `M 125 85 L 125 155 L ${activeTarget.x} ${activeTarget.y}`
+      : `M 275 155 L 275 85 L ${activeTarget.x} ${activeTarget.y}`);
+
+    return (
+      <div className="w-full max-w-sm bg-slate-900 border border-red-500/40 rounded-2xl p-3 sm:p-4 my-2.5 shadow-xl space-y-3.5 select-none text-slate-100 font-sans animate-in zoom-in duration-200">
+        <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+          <div className="flex items-center space-x-1.5 text-red-500 font-black uppercase tracking-wider text-xs animate-pulse">
+            <div className="w-2 h-2 rounded-full bg-red-500 animate-ping mr-1"></div>
+            <span>Live Navigation Active</span>
+          </div>
+          <span className="text-[10px] text-slate-400 font-semibold truncate max-w-[130px]">{venue}</span>
+        </div>
+
+        {/* Live Active Navigation HUD Map */}
+        <div className="relative w-full h-[170px] sm:h-[220px] bg-slate-950/90 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center">
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:15px_15px] opacity-10 pointer-events-none"></div>
+
+          <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 240">
+            <ellipse cx="200" cy="120" rx="175" ry="98" fill="#0b1329" stroke="#1e293b" strokeWidth="4" />
+            <ellipse cx="200" cy="120" rx="146" ry="80" fill="none" stroke="#1e293b" strokeWidth="32" opacity="0.75" />
+            <ellipse cx="200" cy="120" rx="130" ry="64" fill="#0f172a" stroke="#475569" strokeWidth="2.5" />
+
+            {/* Active route path */}
+            <path 
+              d={activePath} 
+              fill="none" 
+              stroke="#ef4444" 
+              strokeWidth="5" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              opacity="0.3" 
+            />
+            <path 
+              d={activePath} 
+              fill="none" 
+              stroke="#ef4444" 
+              strokeWidth="2.5" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+            />
+            <path 
+              d={activePath} 
+              fill="none" 
+              stroke="#ffffff" 
+              strokeWidth="1.2" 
+              strokeDasharray="4,5" 
+              className="route-dash-animated" 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+            />
+
+            {/* Live GPS Dot */}
+            <circle cx={section === "104" ? 125 : 275} cy={section === "104" ? 85 : 155} r="8" fill="#ef4444" opacity="0.4" className="animate-ping" />
+            <circle cx={section === "104" ? 125 : 275} cy={section === "104" ? 85 : 155} r="5.5" fill="#ef4444" stroke="#ffffff" strokeWidth="2" />
+          </svg>
+
+          {/* Compass overlay */}
+          <div className="absolute top-3 right-3 bg-red-950/80 px-2 py-1 border border-red-500/30 rounded-lg text-[9px] font-mono leading-none flex items-center space-x-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+            <span className="font-bold text-red-200">GPS LIVE</span>
+          </div>
+        </div>
+
+        {/* Live Turn Guide Hud */}
+        <div className="bg-red-950/20 border border-red-500/20 rounded-xl p-3 space-y-2 text-xs">
+          <div className="flex justify-between items-center">
+            <span className="font-bold text-red-400 block uppercase tracking-wider text-[10px]">Active Checkpoint</span>
+            <span className="text-[10px] font-mono text-red-200">{isClear ? 'ETA 1 min' : 'ETA 3 mins'}</span>
+          </div>
+          <p className="text-slate-200 text-[11px] leading-relaxed">
+            🚶 <strong>Current Instruction:</strong> {activeTarget.directions[0]} Then proceed straight to Nonna's Pizza and turn right.
+          </p>
+
+          <div className="flex justify-between items-center pt-1.5">
+            <div className="flex items-center space-x-1.5 text-[9px] font-mono">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+              <span className="text-slate-400">GPS Status:</span>
+              <span className="text-emerald-400 font-bold">Active Navigating</span>
+            </div>
+            <button 
+              onClick={() => setIsNavigating(false)}
+              className="py-2.5 px-4 sm:py-1.5 sm:px-3 rounded-lg bg-red-950 border border-red-500/30 hover:bg-red-900/50 text-red-200 text-[9px] font-black uppercase tracking-wider cursor-pointer shadow transition-all"
+            >
+              Stop Navigation
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-3 sm:p-4 my-2.5 shadow-xl space-y-3.5 select-none text-slate-100 font-sans">
+      <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+        <div className="flex items-center space-x-1.5 text-stadium-gold font-bold uppercase tracking-wider text-xs">
+          <MapPin className="w-4 h-4 text-stadium-gold" />
+          <span>{currentView === 'map' ? 'Wayfinding Seat Map' : 'Suggested Real Routes'}</span>
+        </div>
+        <span className="text-[10px] text-slate-400 font-semibold truncate max-w-[130px]">{venue}</span>
+      </div>
+
+      {currentView === 'map' ? (
+        <>
+          {/* Default Seating Map View */}
+          <div className="relative w-full h-[170px] sm:h-[220px] bg-slate-950/90 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center">
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:15px_15px] opacity-10 pointer-events-none"></div>
+
+            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 240">
+              <ellipse cx="200" cy="120" rx="175" ry="98" fill="#0b1329" stroke="#1e293b" strokeWidth="4" />
+              <ellipse cx="200" cy="120" rx="146" ry="80" fill="none" stroke="#1e293b" strokeWidth="32" opacity="0.75" />
+              <ellipse cx="200" cy="120" rx="130" ry="64" fill="#0f172a" stroke="#475569" strokeWidth="2.5" />
+              <rect x="152" y="95" width="96" height="50" rx="3" fill="#10b981" fillOpacity="0.08" stroke="#10b981" strokeWidth="1.5" opacity="0.3" />
+              <text x="125" y="86" fill="#475569" fontSize="7" fontWeight="bold" textAnchor="middle">SEC 104</text>
+              <text x="275" y="86" fill="#475569" fontSize="7" fontWeight="bold" textAnchor="middle">SEC 143</text>
+              <text x="125" y="162" fill="#475569" fontSize="7" fontWeight="bold" textAnchor="middle">SEC 128</text>
+              <text x="275" y="162" fill="#475569" fontSize="7" fontWeight="bold" textAnchor="middle">SEC 112</text>
+
+              {/* Dynamic walking route path along concourse */}
+              <path d={activePathD} fill="none" stroke="#3b82f6" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" opacity="0.3" />
+              <path d={activePathD} fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d={activePathD} fill="none" stroke="#ffffff" strokeWidth="1.2" strokeDasharray="4,5" className="route-dash-animated" strokeLinecap="round" strokeLinejoin="round" />
+
+              {/* Start seat position dot */}
+              <circle cx={section === "104" ? 125 : 275} cy={section === "104" ? 85 : 155} r="10" fill="#3b82f6" opacity="0.3" className="animate-ping" />
+              <circle cx={section === "104" ? 125 : 275} cy={section === "104" ? 85 : 155} r="5.5" fill="#2563eb" stroke="#ffffff" strokeWidth="2" />
+
+              {/* Clickable active target pin */}
+              <g>
+                <circle cx={activeTarget.x} cy={activeTarget.y} r="8" fill={activeTarget.color} opacity="0.4" className="animate-ping" />
+                <circle cx={activeTarget.x} cy={activeTarget.y} r="4.5" fill={activeTarget.color} stroke="#ffffff" strokeWidth="1.5" />
+              </g>
+            </svg>
+
+            {/* Target icon badge */}
+            <div className="absolute top-3 right-3 bg-slate-950/80 px-2.5 py-1 border border-slate-800 rounded-lg text-[9px] font-mono leading-none flex items-center space-x-1">
+              <span>{activeEmoji}</span>
+              <span className="font-bold text-slate-200">{targetName}</span>
+            </div>
+          </div>
+
+          {/* CHOOSE TYPE Category Switcher Tab Bar */}
+          <div className="space-y-1 shrink-0 pb-1">
+            <span className="text-[7.5px] text-slate-400 uppercase tracking-wider block font-black">Choose Type</span>
+            <div className="flex gap-1.5">
+              <button 
+                onClick={() => handleTypeChange('restroom')}
+                className={`flex-1 py-2 px-2 rounded-xl border text-[10px] font-black uppercase text-center cursor-pointer transition-all ${
+                  facilityType === 'restroom' 
+                    ? 'border-stadium-gold bg-stadium-gold/10 text-stadium-gold font-bold' 
+                    : 'border-slate-800 bg-slate-950/30 text-slate-400 hover:border-slate-700'
+                }`}
+              >
+                🚽 Restrooms
+              </button>
+              <button 
+                onClick={() => handleTypeChange('food')}
+                className={`flex-1 py-2 px-2 rounded-xl border text-[10px] font-black uppercase text-center cursor-pointer transition-all ${
+                  facilityType === 'food' 
+                    ? 'border-stadium-gold bg-stadium-gold/10 text-stadium-gold font-bold' 
+                    : 'border-slate-800 bg-slate-950/30 text-slate-400 hover:border-slate-700'
+                }`}
+              >
+                🍔 Food
+              </button>
+              <button 
+                onClick={() => handleTypeChange('gate')}
+                className={`flex-1 py-2 px-2 rounded-xl border text-[10px] font-black uppercase text-center cursor-pointer transition-all ${
+                  facilityType === 'gate' 
+                    ? 'border-stadium-gold bg-stadium-gold/10 text-stadium-gold font-bold' 
+                    : 'border-slate-800 bg-slate-950/30 text-slate-400 hover:border-slate-700'
+                }`}
+              >
+                🚪 Exits
+              </button>
+            </div>
+          </div>
+
+          {/* Horizontal Chips Selection bar */}
+          <div className="space-y-1 shrink-0 pb-1">
+            <div className="flex space-x-2 overflow-x-auto scrollbar-none py-0.5 select-none -mx-1 px-1">
+              {targetsList.map((tg, idx) => {
+                const isSelected = idx === selectedIndex;
+                const emoji = tg.label.split(' ')[0];
+                const name = tg.label.split(' ').slice(1).join(' ').split('(')[0].trim();
+                
+                return (
+                  <button
+                    key={tg.id}
+                    onClick={() => setSelectedIndex(idx)}
+                    className={`flex items-center space-x-1.5 py-1.5 px-2.5 rounded-full border text-xs cursor-pointer transition-all duration-300 outline-none whitespace-nowrap shrink-0 ${
+                      isSelected
+                        ? 'border-stadium-gold bg-stadium-gold/15 text-stadium-gold shadow-[0_0_8px_rgba(251,191,36,0.06)] font-bold'
+                        : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                    }`}
+                  >
+                    <span>{emoji}</span>
+                    <span className="text-[9px]">{name}</span>
+                    <span style={{ color: tg.color }} className="text-[8px] font-mono font-black">
+                      ({tg.capacity}%)
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Scrollable Turn-by-Turn Guide */}
+          <div className="bg-slate-950/50 rounded-xl p-3 border border-slate-800/80 text-[10.5px] space-y-2 shrink-0 max-h-[85px] overflow-y-auto custom-scrollbar font-mono leading-normal text-slate-300">
+            <span className="text-[8px] text-stadium-gold uppercase tracking-wider block font-black border-b border-slate-800 pb-1">
+              🚶‍♂️ Turn-by-Turn Navigation Guide (Start: Sec {section})
+            </span>
+            <div className="space-y-1">
+              {activeTarget.directions.map((step, sidx) => (
+                <div key={sidx} className="flex items-start space-x-1.5">
+                  <span className="text-stadium-gold shrink-0 font-bold">{sidx + 1}.</span>
+                  <span>{step}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Legend and Suggest Route */}
+          <div className="flex justify-between items-center text-[10px] font-mono bg-slate-950/40 p-2 rounded-xl border border-slate-800/60 leading-tight">
+            <div>
+              <span className="font-bold text-emerald-400 block">{activeTarget.capacity < 30 ? '🟢 Low Crowd' : activeTarget.capacity < 60 ? '🟡 Moderate' : '🔴 Busy'}</span>
+              <span className="text-slate-400 text-[8.5px] block">Capacity: {activeTarget.capacity}%</span>
+            </div>
+            <button 
+              onClick={toggleView}
+              className="py-2.5 px-3.5 sm:py-1.5 sm:px-2.5 rounded-xl bg-stadium-gold hover:bg-stadium-gold-light text-stadium-navy-deep font-black uppercase text-[9px] cursor-pointer shadow transition-all shrink-0"
+            >
+              Suggest Route
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Suggested Real Routes Concourse View */}
+          <div className="relative w-full h-[180px] sm:h-[235px] bg-slate-950/90 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center">
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:15px_15px] opacity-10 pointer-events-none"></div>
+
+            <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 240">
+              <ellipse cx="200" cy="120" rx="175" ry="98" fill="#0b1329" stroke="#1e293b" strokeWidth="4" />
+              <ellipse cx="200" cy="120" rx="146" ry="80" fill="none" stroke="#1e293b" strokeWidth="32" opacity="0.75" />
+              <ellipse cx="200" cy="120" rx="130" ry="64" fill="#0f172a" stroke="#475569" strokeWidth="2.5" />
+              <rect x="135" y="88" width="130" height="64" rx="4" fill="#14532d/65" stroke="#15803d" strokeWidth="1.5" opacity="0.7" />
+
+              <path 
+                d={activeTarget.pathD || activePathD}
+                fill="none" 
+                stroke={isClear ? "#10b981" : "#10b98135"} 
+                strokeWidth={isClear ? "4" : "2"} 
+                strokeLinecap="round"
+                className={isClear ? "animate-crawl" : ""}
+                style={{ strokeDasharray: isClear ? '6,6' : 'none' }}
+              />
+              <path 
+                d={section === "104" 
+                  ? `M 125 85 L 125 155 L ${activeTarget.x} ${activeTarget.y}` 
+                  : `M 275 155 L 275 85 L ${activeTarget.x} ${activeTarget.y}`}
+                fill="none" 
+                stroke={!isClear ? "#ef4444" : "#ef444435"} 
+                strokeWidth={!isClear ? "4" : "2"} 
+                strokeLinecap="round"
+                className={!isClear ? "animate-crawl" : ""}
+                style={{ strokeDasharray: !isClear ? '6,6' : 'none' }}
+              />
+
+              <circle cx={section === "104" ? 125 : 275} cy={section === "104" ? 85 : 155} r="8" fill="#3b82f6" opacity="0.4" />
+              <circle cx={section === "104" ? 125 : 275} cy={section === "104" ? 85 : 155} r="4.5" fill="#1d4ed8" stroke="#60a5fa" strokeWidth="1.5" />
+
+              <circle cx={activeTarget.x} cy={activeTarget.y} r="8" fill={activeTarget.color} opacity="0.4" />
+              <circle cx={activeTarget.x} cy={activeTarget.y} r="4.5" fill={activeTarget.color} stroke="#ffffff" strokeWidth="1.5" />
+            </svg>
+
+            <div className="absolute bottom-3 left-3 bg-slate-950/80 px-2 py-1 border border-slate-800 rounded-lg text-[9px] font-mono leading-none">
+              <span className="text-slate-400 uppercase text-[7px] block">Start Point</span>
+              <span className="font-bold text-slate-200">Sec {section}</span>
+            </div>
+            <div className="absolute top-3 right-3 bg-slate-950/80 px-2 py-1 border border-slate-800 rounded-lg text-[9px] font-mono leading-none">
+              <span className="text-slate-400 uppercase text-[7px] block">Destination</span>
+              <span className="font-bold text-slate-200">{targetName}</span>
+            </div>
+          </div>
+
+          {/* Side-by-side routes comparison flex cards */}
+          <div className="flex gap-2 shrink-0">
+            <button
+              onClick={() => selectRoute('clear')}
+              className={`flex-1 flex flex-col p-2 rounded-xl border text-left cursor-pointer transition-all duration-300 outline-none min-w-0 ${
+                isClear
+                  ? 'border-emerald-500 bg-emerald-500/10 shadow-[0_0_12px_rgba(16,185,129,0.08)]'
+                  : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
+              }`}
+            >
+              <div className="flex items-center space-x-1.5 w-full">
+                <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+                  isClear ? 'border-emerald-400' : 'border-slate-600'
+                }`}>
+                  {isClear && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>}
+                </div>
+                <span className={`text-[10px] font-black truncate ${isClear ? 'text-emerald-400' : 'text-slate-200'}`}>
+                  Route A (Concourse)
+                </span>
+              </div>
+              <div className="mt-1 flex justify-between items-baseline w-full">
+                <span className="text-[7.5px] text-slate-400 font-medium">🟢 Low Crowd</span>
+                <span className="text-[9.5px] font-mono font-black text-emerald-400">10% • 1m</span>
+              </div>
+            </button>
+
+            <button
+              onClick={() => selectRoute('main')}
+              className={`flex-1 flex flex-col p-2 rounded-xl border text-left cursor-pointer transition-all duration-300 outline-none min-w-0 ${
+                !isClear
+                  ? 'border-red-500 bg-red-500/10 shadow-[0_0_12px_rgba(239,68,68,0.08)]'
+                  : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
+              }`}
+            >
+              <div className="flex items-center space-x-1.5 w-full">
+                <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
+                  !isClear ? 'border-red-400' : 'border-slate-600'
+                }`}>
+                  {!isClear && <div className="w-1.5 h-1.5 rounded-full bg-red-400"></div>}
+                </div>
+                <span className={`text-[10px] font-black truncate ${!isClear ? 'text-red-400' : 'text-slate-200'}`}>
+                  Route B (Shortcut)
+                </span>
+              </div>
+              <div className="mt-1 flex justify-between items-baseline w-full">
+                <span className="text-[7.5px] text-slate-400 font-medium">🔴 Congested</span>
+                <span className="text-[9.5px] font-mono font-black text-red-400">88% • 3m</span>
+              </div>
+            </button>
+          </div>
+
+          <button
+            onClick={() => setIsNavigating(true)}
+            className={`w-full py-3.5 sm:py-2.5 rounded-xl font-black uppercase text-[10px] tracking-wider transition-all duration-300 shadow cursor-pointer text-center ${
+              isClear 
+                ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_4px_10px_rgba(16,185,129,0.2)]' 
+                : 'bg-red-600 hover:bg-red-500 text-white shadow-[0_4px_10px_rgba(239,68,68,0.2)]'
+            }`}
+          >
+            Start Live Navigation
+          </button>
+
+          {/* Live Crowd Density Intelligence */}
+          <div className="bg-slate-950/50 rounded-xl p-2.5 border border-slate-800/80 space-y-1.5 text-[9px] font-sans">
+            <div className="flex justify-between items-center">
+              <span className="text-[7.5px] text-slate-400 uppercase tracking-wide font-black">Gate Crowd Density status</span>
+              <span className="px-1 py-0.5 rounded bg-blue-950 text-blue-400 font-extrabold text-[6px]">AI Operations</span>
+            </div>
+            <div className="grid grid-cols-3 gap-1 text-[8px] font-mono text-center">
+              <div className="p-1 rounded bg-slate-900 border border-slate-800/80">
+                <span className="text-slate-500 block text-[6.5px]">Gate A</span>
+                <span className="text-emerald-400 font-bold">🟢 12%</span>
+              </div>
+              <div className="p-1 rounded bg-slate-900 border border-slate-800/80">
+                <span className="text-slate-500 block text-[6.5px]">Gate B</span>
+                <span className="text-amber-400 font-bold">🟡 45%</span>
+              </div>
+              <div className="p-1 rounded bg-slate-900 border border-slate-800/80">
+                <span className="text-slate-500 block text-[6.5px]">Gate C</span>
+                <span className="text-red-400 font-bold">🔴 88%</span>
+              </div>
+            </div>
+            <div className="p-2 rounded bg-amber-500/5 border border-amber-500/20 text-slate-300 text-[8.5px] leading-snug">
+              <strong>🤖 AI Suggestion:</strong> Avoid Gate C. Expected delay: 4 minutes due to bottleneck. Concourse Route A bypasses this zone.
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center text-[10px] font-mono bg-slate-950/40 p-2 rounded-xl border border-slate-800/60 leading-tight">
+            <div>
+              <span className="text-slate-400 block uppercase text-[8px] tracking-wide font-black">Routing Status</span>
+              <span className={`font-bold ${isClear ? 'text-emerald-400' : 'text-red-400'}`}>
+                {isClear ? 'Recommended: Corridor Route' : 'Slow shortcut via Seating'}
+              </span>
+            </div>
+            <button 
+              onClick={toggleView}
+              className="py-2.5 px-3.5 sm:py-1.5 sm:px-2.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold uppercase text-[9px] cursor-pointer shadow transition-all"
+            >
+              Back to Seats
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+export default function MessageList({ messages, isTyping, ratingThanksText, matchId }) {
+  const containerRef = useRef(null);
+  const [ratedMessages, setRatedMessages] = useState({});
+  const [pollVotes, setPollVotes] = useState({});
+  const [triviaVotes, setTriviaVotes] = useState({}); // maps questionId -> { selectedIndex, correctIndex, isCorrect }
 
   const scrollToBottom = () => {
     if (containerRef.current) {
@@ -258,632 +735,18 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
 
     if (mapMatch) {
       const [_, venue, section, target, eta, distance] = mapMatch;
-      
-      const sectionCoordsMap = {
-        "112": { x: 75, y: 70, label: "Section 112" },
-        "104": { x: 25, y: 30, label: "Section 104" },
-        "128": { x: 25, y: 75, label: "Section 128" },
-        "143": { x: 75, y: 25, label: "Section 143" }
-      };
-
-      const targetCoordsMap = {
-        "restroom": { x: 70, y: 72, label: "🚻 Restroom (Sec 112)" },
-        "restroom_104": { x: 28, y: 28, label: "🚻 Restroom (Sec 104)" },
-        "pizza": { x: 80, y: 65, label: "🍕 Pizza Stand (Sec 114)" },
-        "pizza_324": { x: 20, y: 80, label: "🍕 Pizza Stand (Sec 324)" },
-        "elevator": { x: 72, y: 68, label: "🛗 Elevator (Sec 112)" },
-        "gate_c": { x: 78, y: 62, label: "🚧 Gate C Outflow" }
-      };
-
-      const currentView = mapViews[msgId] || 'seating';
-      const currentRoute = mapRoutes[msgId] || 'clear';
-
-      const toggleView = () => {
-        setMapViews(prev => ({
-          ...prev,
-          [msgId]: currentView === 'seating' ? 'suggested' : 'seating'
-        }));
-      };
-
-      const selectRoute = (route) => {
-        setMapRoutes(prev => ({
-          ...prev,
-          [msgId]: route
-        }));
-      };
-
       const start = sectionCoordsMap[section.trim()] || sectionCoordsMap["112"];
-      
-      let tKey = target.trim().toLowerCase();
-      let targetCoord = targetCoordsMap["restroom"];
-      if (tKey === 'restroom' && section.trim() === '104') {
-        targetCoord = targetCoordsMap["restroom_104"];
-      } else if (tKey === 'restroom') {
-        targetCoord = targetCoordsMap["restroom"];
-      } else if (tKey === 'pizza' && text.includes('324')) {
-        targetCoord = targetCoordsMap["pizza_324"];
-      } else if (tKey === 'pizza') {
-        targetCoord = targetCoordsMap["pizza"];
-      } else if (tKey === 'elevator') {
-        targetCoord = targetCoordsMap["elevator"];
-      } else {
-        targetCoord = targetCoordsMap["gate_c"];
-      }
-
-      // Generate curved pathway around center field (Google Maps corridor pathing)
-      const getPathData = (x1, y1, x2, y2) => {
-        const cx = 50;
-        const cy = 50;
-        const mx = (x1 + x2) / 2;
-        const my = (y1 + y2) / 2;
-        const distToCenter = Math.sqrt(Math.pow(mx - cx, 2) + Math.pow(my - cy, 2));
-
-        let ctrlX = mx;
-        let ctrlY = my;
-        if (distToCenter < 28) {
-          const dx = mx - cx;
-          const dy = my - cy;
-          const len = Math.sqrt(dx * dx + dy * dy) || 1;
-          ctrlX = cx + (dx / len) * 40;
-          ctrlY = cy + (dy / len) * 34;
-        }
-        return `M ${x1} ${y1} Q ${ctrlX} ${ctrlY} ${x2} ${y2}`;
-      };
-
-      const targetsList = getTargetsForSection(section, target);
-      const selectedIndex = selectedTargets[msgId] !== undefined ? selectedTargets[msgId] : 0;
-      const activeTarget = targetsList[selectedIndex] || targetsList[0] || targetCoord;
-      const activeEmoji = activeTarget.label.split(' ')[0];
-
-      // Suggested Route Concourse View
-      if (currentView === 'suggested') {
-        const isClear = currentRoute === 'clear';
-        const isNavigating = navigationActive[msgId] === true;
-        
-        // Define paths and info for suggested routes
-        const routeAPath = activeTarget.pathD;
-        const routeBPath = section === "104"
-          ? `M 125 85 L 125 155 L ${activeTarget.x} ${activeTarget.y}`
-          : `M 275 155 L 275 85 L ${activeTarget.x} ${activeTarget.y}`;
-
-        const activePath = isClear ? routeAPath : routeBPath;
-        const targetName = activeTarget.label.split(' ')[1] || "Facility";
-
-        if (isNavigating) {
-          return (
-            <div className="w-full max-w-sm bg-slate-900 border border-red-500/40 rounded-2xl p-4 my-2.5 shadow-xl space-y-3.5 select-none text-slate-100 font-sans animate-in zoom-in duration-200">
-              <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-                <div className="flex items-center space-x-1.5 text-red-500 font-black uppercase tracking-wider text-xs animate-pulse">
-                  <div className="w-2 h-2 rounded-full bg-red-500 animate-ping mr-1"></div>
-                  <span>Live Navigation Active</span>
-                </div>
-                <span className="text-[10px] text-slate-400 font-semibold truncate max-w-[130px]">{venue}</span>
-              </div>
-
-              {/* Large Map Viewport */}
-              <div className="relative w-full h-[250px] bg-slate-950/90 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center">
-                {/* Grid Background */}
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:15px_15px] opacity-10 pointer-events-none"></div>
-
-                <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 240">
-                  {/* Outer Stadium Ellipse wall */}
-                  <ellipse cx="200" cy="120" rx="175" ry="98" fill="#0b1329" stroke="#1e293b" strokeWidth="4" />
-                  <ellipse cx="200" cy="120" rx="168" ry="92" fill="none" stroke="#334155" strokeWidth="1.5" opacity="0.6" />
-
-                  {/* Concourse Walkway Corridor (Fill background) */}
-                  <ellipse cx="200" cy="120" rx="146" ry="80" fill="none" stroke="#1e293b" strokeWidth="32" opacity="0.75" />
-
-                  {/* Seating Bowl Inner Wall boundary */}
-                  <ellipse cx="200" cy="120" rx="130" ry="64" fill="#0f172a" stroke="#475569" strokeWidth="2.5" />
-
-                  {/* Grass Field in Center */}
-                  <rect x="152" y="95" width="96" height="50" rx="3" fill="#10b981" fillOpacity="0.08" stroke="#10b981" strokeWidth="1.5" opacity="0.3" />
-
-                  {/* Vomitory seating access tunnels */}
-                  <line x1="285" y1="162" x2="305" y2="173" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
-                  <line x1="115" y1="78" x2="95" y2="67" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
-                  <line x1="115" y1="162" x2="95" y2="173" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
-                  <line x1="285" y1="78" x2="305" y2="67" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
-
-                  {/* Selected Active path with crawling dashed overlay */}
-                  <path 
-                    d={activePath} 
-                    fill="none" 
-                    stroke={isClear ? "#10b981" : "#ef4444"} 
-                    strokeWidth="5" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                  />
-                  <path 
-                    d={activePath} 
-                    fill="none" 
-                    stroke="#ffffff" 
-                    strokeWidth="1.5" 
-                    strokeDasharray="4,4" 
-                    className="route-dash-animated" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                  />
-
-                  {/* Pulse Blue Dot Marker (GPS Start) */}
-                  <circle cx={section === "104" ? 125 : 275} cy={section === "104" ? 85 : 155} r="10" fill="#3b82f6" opacity="0.4" className="animate-ping" />
-                  <circle cx={section === "104" ? 125 : 275} cy={section === "104" ? 85 : 155} r="5.5" fill="#2563eb" stroke="#ffffff" strokeWidth="2" />
-                </svg>
-
-                {/* Clickable pins overlay */}
-                <div className="absolute inset-0 pointer-events-none">
-                  <div 
-                    style={{ 
-                      left: `${(activeTarget.x / 400) * 100}%`, 
-                      top: `${(activeTarget.y / 240) * 100}%`,
-                      transform: 'translate(-50%, -85%)'
-                    }} 
-                    className="absolute z-20 flex flex-col items-center scale-110"
-                  >
-                    <div className="relative w-7 h-9 flex items-center justify-center shrink-0">
-                      <svg 
-                        style={{ color: isClear ? activeTarget.color : "#ef4444" }}
-                        className="absolute inset-0 w-full h-full filter drop-shadow-md" 
-                        viewBox="0 0 24 24" 
-                        fill="currentColor"
-                      >
-                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
-                      </svg>
-                      <div className="absolute top-[5px] w-[15px] h-[15px] rounded-full bg-white flex items-center justify-center text-[9px] z-10 shadow-sm">
-                        {activeEmoji}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Navigation Status Floaters */}
-                <div className="absolute bottom-3 left-3 bg-slate-950/80 px-2 py-1 border border-slate-800 rounded-lg text-[9px] font-mono leading-none">
-                  <span className="text-slate-400 uppercase text-[7px] block">Your Location</span>
-                  <span className="font-bold text-slate-200">Sec {section} Gateway</span>
-                </div>
-
-                <div className="absolute top-3 right-3 bg-slate-950/80 px-2 py-1 border border-slate-800 rounded-lg text-[9px] font-mono leading-none">
-                  <span className="text-slate-400 uppercase text-[7px] block">Destination</span>
-                  <span className="font-bold text-slate-200">{targetName}</span>
-                </div>
-              </div>
-
-              {/* Navigation Dashboard (Phase 24) */}
-              <div className="bg-slate-950/60 rounded-xl p-3 border border-slate-800 space-y-2 font-sans">
-                <div className="flex justify-between items-center text-[10px]">
-                  <span className="font-bold text-slate-200">🏃 Estimated Arrival</span>
-                  <span className="font-mono text-emerald-400 font-black">{isClear ? "45 Seconds" : "3 Minutes"}</span>
-                </div>
-                
-                <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800/80 space-y-1">
-                  <span className="text-[7.5px] text-slate-500 uppercase tracking-wider block font-black">Current Step</span>
-                  <p className="text-xs font-bold text-slate-100">
-                    {section === "104" ? "Turn left at Gate 4 and walk 30m" : "Turn right after Gate 12 and walk 40m"}
-                  </p>
-                  <p className="text-[9px] text-slate-400">
-                    Next Checkpoint: Concession Food Court (35m ahead)
-                  </p>
-                </div>
-
-                <div className="flex justify-between items-center pt-1.5">
-                  <div className="flex items-center space-x-1.5 text-[9px] font-mono">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                    <span className="text-slate-400">GPS Status:</span>
-                    <span className="text-emerald-400 font-bold">Active Navigating</span>
-                  </div>
-                  <button 
-                    onClick={() => setNavigationActive(prev => ({ ...prev, [msgId]: false }))}
-                    className="py-2.5 px-4 sm:py-1.5 sm:px-3 rounded-lg bg-red-950 border border-red-500/30 hover:bg-red-900/50 text-red-200 text-[9px] font-black uppercase tracking-wider cursor-pointer shadow transition-all"
-                  >
-                    Stop Navigation
-                  </button>
-                </div>
-              </div>
-            </div>
-          );
-        }
-
-        return (
-          <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-4 my-2.5 shadow-xl space-y-3.5 select-none text-slate-100 font-sans">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-              <div className="flex items-center space-x-1.5 text-stadium-gold font-bold uppercase tracking-wider text-xs">
-                <MapPin className="w-4 h-4 text-stadium-gold" />
-                <span>Suggested Real Routes</span>
-              </div>
-              <span className="text-[10px] text-slate-400 font-semibold truncate max-w-[130px]">{venue}</span>
-            </div>
-
-            {/* Graphical Vector Concourse Map */}
-            <div className="relative w-full h-[250px] bg-slate-950/90 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center">
-              {/* Grid Background */}
-              <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:15px_15px] opacity-10 pointer-events-none"></div>
-
-              <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 240">
-                {/* Outer Stadium Ellipse wall */}
-                <ellipse cx="200" cy="120" rx="175" ry="98" fill="#0b1329" stroke="#1e293b" strokeWidth="4" />
-                <ellipse cx="200" cy="120" rx="168" ry="92" fill="none" stroke="#334155" strokeWidth="1.5" opacity="0.6" />
-
-                {/* Concourse Walkway Corridor (Fill background) */}
-                <ellipse cx="200" cy="120" rx="146" ry="80" fill="none" stroke="#1e293b" strokeWidth="32" opacity="0.75" />
-
-                {/* Seating Bowl Inner Wall boundary */}
-                <ellipse cx="200" cy="120" rx="130" ry="64" fill="#0f172a" stroke="#475569" strokeWidth="2.5" />
-
-                {/* Grass Field in Center */}
-                <rect x="152" y="95" width="96" height="50" rx="3" fill="#10b981" fillOpacity="0.08" stroke="#10b981" strokeWidth="1.5" opacity="0.3" />
-
-                {/* Vomitory seating access tunnels */}
-                <line x1="285" y1="162" x2="305" y2="173" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
-                <line x1="115" y1="78" x2="95" y2="67" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
-                <line x1="115" y1="162" x2="95" y2="173" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
-                <line x1="285" y1="78" x2="305" y2="67" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
-
-                {/* Animated white crawling dash overlay on active route */}
-                <path 
-                  d={activePath} 
-                  fill="none" 
-                  stroke="#ffffff" 
-                  strokeWidth="1.2" 
-                  strokeDasharray="4,5" 
-                  className="route-dash-animated" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                />
-
-                {/* Pulse Blue Dot Marker (GPS Start) */}
-                <circle cx={section === "104" ? 125 : 275} cy={section === "104" ? 85 : 155} r="10" fill="#3b82f6" opacity="0.3" className="animate-ping" />
-                <circle cx={section === "104" ? 125 : 275} cy={section === "104" ? 85 : 155} r="5.5" fill="#2563eb" stroke="#ffffff" strokeWidth="2" />
-              </svg>
-
-              {/* Clickable pins overlay */}
-              <div className="absolute inset-0 pointer-events-none">
-                <div 
-                  style={{ 
-                    left: `${(activeTarget.x / 400) * 100}%`, 
-                    top: `${(activeTarget.y / 240) * 100}%`,
-                    transform: 'translate(-50%, -85%)'
-                  }} 
-                  className="absolute z-20 flex flex-col items-center scale-110"
-                >
-                  <div className="relative w-7 h-9 flex items-center justify-center shrink-0">
-                    <svg 
-                      style={{ color: isClear ? activeTarget.color : "#ef4444" }}
-                      className="absolute inset-0 w-full h-full filter drop-shadow-md" 
-                      viewBox="0 0 24 24" 
-                      fill="currentColor"
-                    >
-                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
-                    </svg>
-                    <div className="absolute top-[5px] w-[15px] h-[15px] rounded-full bg-white flex items-center justify-center text-[9px] z-10 shadow-sm">
-                      {activeEmoji}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Float overlays for route status description */}
-              <div className="absolute bottom-3 left-3 bg-slate-950/80 px-2 py-1 border border-slate-800 rounded-lg text-[9px] font-mono leading-none">
-                <span className="text-slate-400 uppercase text-[7px] block">Start Point</span>
-                <span className="font-bold text-slate-200">Sec {section}</span>
-              </div>
-
-              <div className="absolute top-3 right-3 bg-slate-950/80 px-2 py-1 border border-slate-800 rounded-lg text-[9px] font-mono leading-none">
-                <span className="text-slate-400 uppercase text-[7px] block">Destination</span>
-                <span className="font-bold text-slate-200">{targetName}</span>
-              </div>
-            </div>
-
-            {/* Premium Route Options Flexbox Comparison Row (Phase 26 Side-by-Side) */}
-            <div className="flex gap-2 shrink-0">
-              {/* Route A Card */}
-              <button
-                onClick={() => selectRoute('clear')}
-                className={`flex-1 flex flex-col p-2 rounded-xl border text-left cursor-pointer transition-all duration-300 outline-none min-w-0 ${
-                  isClear
-                    ? 'border-emerald-500 bg-emerald-500/10 shadow-[0_0_12px_rgba(16,185,129,0.08)]'
-                    : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
-                }`}
-              >
-                <div className="flex items-center space-x-1.5 w-full">
-                  <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
-                    isClear ? 'border-emerald-400' : 'border-slate-600'
-                  }`}>
-                    {isClear && <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>}
-                  </div>
-                  <span className={`text-[10px] font-black truncate ${isClear ? 'text-emerald-400' : 'text-slate-200'}`}>
-                    Route A (Concourse)
-                  </span>
-                </div>
-                <div className="mt-1 flex justify-between items-baseline w-full">
-                  <span className="text-[7.5px] text-slate-400 font-medium">🟢 Low Crowd</span>
-                  <span className="text-[9.5px] font-mono font-black text-emerald-400">10% • 1m</span>
-                </div>
-              </button>
-
-              {/* Route B Card */}
-              <button
-                onClick={() => selectRoute('main')}
-                className={`flex-1 flex flex-col p-2 rounded-xl border text-left cursor-pointer transition-all duration-300 outline-none min-w-0 ${
-                  !isClear
-                    ? 'border-red-500 bg-red-500/10 shadow-[0_0_12px_rgba(239,68,68,0.08)]'
-                    : 'border-slate-800 bg-slate-950/40 hover:border-slate-700'
-                }`}
-              >
-                <div className="flex items-center space-x-1.5 w-full">
-                  <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 transition-colors ${
-                    !isClear ? 'border-red-400' : 'border-slate-600'
-                  }`}>
-                    {!isClear && <div className="w-1.5 h-1.5 rounded-full bg-red-400"></div>}
-                  </div>
-                  <span className={`text-[10px] font-black truncate ${!isClear ? 'text-red-400' : 'text-slate-200'}`}>
-                    Route B (Shortcut)
-                  </span>
-                </div>
-                <div className="mt-1 flex justify-between items-baseline w-full">
-                  <span className="text-[7.5px] text-slate-400 font-medium">🔴 Congested</span>
-                  <span className="text-[9.5px] font-mono font-black text-red-400">88% • 3m</span>
-                </div>
-              </button>
-            </div>
-
-            {/* Start Live Navigation Action Button (Phase 24) */}
-            <button
-              onClick={() => setNavigationActive(prev => ({ ...prev, [msgId]: true }))}
-              className={`w-full py-3.5 sm:py-2.5 rounded-xl font-black uppercase text-[10px] tracking-wider transition-all duration-300 shadow cursor-pointer text-center ${
-                isClear 
-                  ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-[0_4px_10px_rgba(16,185,129,0.2)]' 
-                  : 'bg-red-600 hover:bg-red-500 text-white shadow-[0_4px_10px_rgba(239,68,68,0.2)]'
-              }`}
-            >
-              Start Live Navigation
-            </button>
-
-            {/* Live Crowd Density Intelligence */}
-            <div className="bg-slate-950/50 rounded-xl p-2.5 border border-slate-800/80 space-y-1.5 text-[9px] font-sans">
-              <div className="flex justify-between items-center">
-                <span className="text-[7.5px] text-slate-400 uppercase tracking-wide font-black">Gate Crowd Density status</span>
-                <span className="px-1 py-0.5 rounded bg-blue-950 text-blue-400 font-extrabold text-[6px]">AI Operations</span>
-              </div>
-              <div className="grid grid-cols-3 gap-1 text-[8px] font-mono text-center">
-                <div className="p-1 rounded bg-slate-900 border border-slate-800/80">
-                  <span className="text-slate-500 block text-[6.5px]">Gate A</span>
-                  <span className="text-emerald-400 font-bold">🟢 Low (12%)</span>
-                </div>
-                <div className="p-1 rounded bg-slate-900 border border-slate-800/80">
-                  <span className="text-slate-500 block text-[6.5px]">Gate B</span>
-                  <span className="text-amber-400 font-bold">🟡 Mid (45%)</span>
-                </div>
-                <div className="p-1 rounded bg-slate-900 border border-slate-800/80">
-                  <span className="text-slate-500 block text-[6.5px]">Gate C</span>
-                  <span className="text-red-400 font-bold">🔴 High (88%)</span>
-                </div>
-              </div>
-              <div className="p-2 rounded bg-amber-500/5 border border-amber-500/20 text-slate-300 text-[8.5px] leading-snug">
-                <strong>🤖 AI Suggestion:</strong> Avoid Gate C. Expected delay: 4 minutes due to bottleneck. Concourse Route A bypasses this zone.
-              </div>
-            </div>
-
-            {/* Back button and alternate details */}
-            <div className="flex justify-between items-center text-[10px] font-mono bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/60 leading-tight">
-              <div>
-                <span className="text-slate-400 block uppercase text-[8px] tracking-wide font-black">Routing Status</span>
-                <span className={`font-bold ${isClear ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {isClear ? 'Recommended: Corridor Route' : 'Slow shortcut via Seating'}
-                </span>
-              </div>
-              <button 
-                onClick={toggleView}
-                className="py-2.5 px-3 sm:py-1.5 sm:px-2 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold uppercase text-[9px] cursor-pointer shadow transition-all"
-              >
-                Back to Seats
-              </button>
-            </div>
-          </div>
-        );
-      }
-
-      // Default Seating Map View
-      const activePathD = getPathData(start.x, start.y, activeTarget.x, activeTarget.y);
-
       return (
-        <div className="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-4 my-2.5 shadow-xl space-y-3.5 select-none text-slate-100 font-sans">
-          <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-            <div className="flex items-center space-x-1.5 text-stadium-gold font-bold uppercase tracking-wider text-xs">
-              <MapPin className="w-4 h-4 text-stadium-gold" />
-              <span>Wayfinding Seat Map</span>
-            </div>
-            <span className="text-[10px] text-slate-400 font-semibold truncate max-w-[130px]">{venue}</span>
-          </div>
-
-          {/* Large Legible 2D Concourse Wayfinding Map */}
-          <div className="relative w-full h-[170px] sm:h-[220px] bg-slate-950/90 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center">
-            {/* Grid background lines */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:15px_15px] opacity-10 pointer-events-none"></div>
-
-            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 240">
-              <defs>
-                <style>{`
-                  @keyframes routeDash {
-                    to {
-                      stroke-dashoffset: -20;
-                    }
-                  }
-                  .route-dash-animated {
-                    animation: routeDash 1.2s linear infinite;
-                  }
-                `}</style>
-              </defs>
-
-              {/* Outer Stadium Ellipse wall */}
-              <ellipse cx="200" cy="120" rx="175" ry="98" fill="#0b1329" stroke="#1e293b" strokeWidth="4" />
-              <ellipse cx="200" cy="120" rx="168" ry="92" fill="none" stroke="#334155" strokeWidth="1.5" opacity="0.6" />
-
-              {/* Concourse Walkway Corridor (Fill background) */}
-              <ellipse cx="200" cy="120" rx="146" ry="80" fill="none" stroke="#1e293b" strokeWidth="32" opacity="0.75" />
-
-              {/* Seating Bowl Inner Wall boundary */}
-              <ellipse cx="200" cy="120" rx="130" ry="64" fill="#0f172a" stroke="#475569" strokeWidth="2.5" />
-
-              {/* Grass Field in Center */}
-              <rect x="152" y="95" width="96" height="50" rx="3" fill="#10b981" fillOpacity="0.08" stroke="#10b981" strokeWidth="1.5" opacity="0.3" />
-              <line x1="200" y1="95" x2="200" y2="145" stroke="#10b981" strokeWidth="1" opacity="0.2" />
-              <circle cx="200" cy="120" r="16" fill="none" stroke="#10b981" strokeWidth="1" opacity="0.2" />
-
-              {/* Vomitory seating access tunnels */}
-              <line x1="285" y1="162" x2="305" y2="173" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
-              <line x1="115" y1="78" x2="95" y2="67" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
-              <line x1="115" y1="162" x2="95" y2="173" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
-              <line x1="285" y1="78" x2="305" y2="67" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
-
-              {/* Seating Section Labels (Static text in seating area) */}
-              <text x="125" y="86" fill="#475569" fontSize="7" fontWeight="bold" textAnchor="middle">SEC 104</text>
-              <text x="275" y="86" fill="#475569" fontSize="7" fontWeight="bold" textAnchor="middle">SEC 143</text>
-              <text x="125" y="162" fill="#475569" fontSize="7" fontWeight="bold" textAnchor="middle">SEC 128</text>
-              <text x="275" y="162" fill="#475569" fontSize="7" fontWeight="bold" textAnchor="middle">SEC 112</text>
-
-              {/* Dynamic walking route path along concourse */}
-              <path 
-                d={activeTarget.pathD || activePathD} 
-                fill="none" 
-                stroke="#3b82f6" 
-                strokeWidth="5" 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                opacity="0.3" 
-              />
-              <path 
-                d={activeTarget.pathD || activePathD} 
-                fill="none" 
-                stroke="#2563eb" 
-                strokeWidth="2.5" 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-              />
-              <path 
-                d={activeTarget.pathD || activePathD} 
-                fill="none" 
-                stroke="#ffffff" 
-                strokeWidth="1.2" 
-                strokeDasharray="4,5" 
-                className="route-dash-animated" 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-              />
-
-              {/* Start seat position dot */}
-              <circle cx={section === "104" ? 125 : 275} cy={section === "104" ? 85 : 155} r="10" fill="#3b82f6" opacity="0.3" className="animate-ping" />
-              <circle cx={section === "104" ? 125 : 275} cy={section === "104" ? 85 : 155} r="5.5" fill="#2563eb" stroke="#ffffff" strokeWidth="2" />
-            </svg>
-
-            {/* Float Label overlays for Start / End */}
-            <div className="absolute bottom-3 left-3 bg-slate-950/80 px-2 py-1 border border-slate-800 rounded-lg text-[9px] font-mono leading-none">
-              <span className="text-slate-400 uppercase text-[7px] block">Your Seat</span>
-              <span className="font-bold text-slate-200">Sec {section}</span>
-            </div>
-
-            {/* Clickable single active target pin overlay */}
-            <div className="absolute inset-0 pointer-events-none">
-              <div 
-                style={{ 
-                  left: `${(activeTarget.x / 400) * 100}%`, 
-                  top: `${(activeTarget.y / 240) * 100}%`,
-                  transform: 'translate(-50%, -85%)'
-                }} 
-                className="absolute z-20 flex flex-col items-center scale-110"
-              >
-                <div className="relative w-7 h-9 flex items-center justify-center shrink-0">
-                  <svg 
-                    style={{ color: activeTarget.color }}
-                    className="absolute inset-0 w-full h-full filter drop-shadow-md" 
-                    viewBox="0 0 24 24" 
-                    fill="currentColor"
-                  >
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
-                  </svg>
-                  <div className="absolute top-[5px] w-[15px] h-[15px] rounded-full bg-white flex items-center justify-center text-[9px] z-10 shadow-sm">
-                    {activeEmoji}
-                  </div>
-                  
-                  {/* Crowd capacity bubble overlay */}
-                  <div className="absolute -top-3.5 px-1 rounded bg-slate-950 border border-slate-700 text-[6px] font-black text-slate-200 shadow-sm leading-tight whitespace-nowrap">
-                    {activeTarget.capacity}%
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Nearest Facility Options Horizontal Chips Selector (Phase 26 Clutter Free) */}
-          <div className="space-y-1.5 shrink-0">
-            <span className="text-[7.5px] text-slate-400 uppercase tracking-wider block font-black">Choose Nearest Location</span>
-            <div className="flex space-x-2 overflow-x-auto scrollbar-none pb-1 py-0.5 select-none -mx-1 px-1">
-              {targetsList.map((tg, idx) => {
-                const isSelected = idx === selectedIndex;
-                const emoji = tg.label.split(' ')[0];
-                const name = tg.label.split(' ').slice(1).join(' ');
-                
-                return (
-                  <button
-                    key={tg.id}
-                    onClick={() => {
-                      setSelectedTargets(prev => ({
-                        ...prev,
-                        [msgId]: idx
-                      }));
-                    }}
-                    className={`flex items-center space-x-1.5 py-1.5 px-3 rounded-full border text-xs cursor-pointer transition-all duration-300 outline-none whitespace-nowrap shrink-0 ${
-                      isSelected
-                        ? 'border-stadium-gold bg-stadium-gold/15 text-stadium-gold shadow-[0_0_8px_rgba(251,191,36,0.06)]'
-                        : 'border-slate-800 bg-slate-950/40 text-slate-300 hover:border-slate-700 hover:text-white'
-                    }`}
-                  >
-                    <span>{emoji}</span>
-                    <span className="text-[9px] font-bold">{name}</span>
-                    <span 
-                      style={{ color: tg.color }}
-                      className="text-[8px] font-mono font-black animate-pulse"
-                    >
-                      ({tg.capacity}%)
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Step-by-Step Directions Guide */}
-          <div className="bg-slate-950/50 rounded-xl p-3 border border-slate-800/80 text-[10px] space-y-1.5 shrink-0 max-h-[85px] overflow-y-auto custom-scrollbar font-mono leading-normal text-slate-300">
-            <span className="text-[8px] text-stadium-gold uppercase tracking-wider block font-black border-b border-slate-800 pb-1">
-              🚶‍♂️ Turn-by-Turn Navigation Guide (Start: Sec {section})
-            </span>
-            {activeTarget.directions.map((step, sidx) => (
-              <div key={sidx} className="flex items-start space-x-1.5">
-                <span className="text-stadium-gold shrink-0 font-bold">{sidx + 1}.</span>
-                <span>{step}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Route info legend footer */}
-          <div className="flex justify-between items-center text-[10px] font-mono bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/60 leading-tight">
-            <div>
-              <span className="text-slate-400 block uppercase text-[8px] tracking-wide font-black">Target Location</span>
-              <span className="font-bold text-slate-200">{activeTarget.label}</span>
-            </div>
-            <div className="text-right border-l border-slate-800 pl-3 flex items-center space-x-2">
-              <div>
-                <span className="font-bold text-emerald-400 block">{distance} away</span>
-                <span className="text-slate-400 text-[9px] block">~{eta} walk</span>
-              </div>
-              <button 
-                onClick={toggleView}
-                className="py-2.5 px-3.5 sm:py-1.5 sm:px-2.5 rounded-xl bg-stadium-gold hover:bg-stadium-gold-light text-stadium-navy-deep font-black uppercase text-[9px] cursor-pointer shadow transition-all ml-2.5 shrink-0"
-              >
-                Suggest Route
-              </button>
-            </div>
-          </div>
-        </div>
+        <WayfindingCard 
+          msgId={msgId}
+          venue={venue}
+          section={section}
+          start={start}
+          initialTarget={target}
+          text={text}
+          eta={eta}
+          distance={distance}
+        />
       );
     }
 
