@@ -13,6 +13,10 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
   const [pollVotes, setPollVotes] = useState({});
   const [triviaVotes, setTriviaVotes] = useState({}); // maps questionId -> { selectedIndex, correctIndex, isCorrect }
 
+  // Map suggested routing states (Phase 19)
+  const [mapViews, setMapViews] = useState({}); // Stores 'seating' or 'suggested' keyed by messageId
+  const [mapRoutes, setMapRoutes] = useState({}); // Stores 'clear' or 'main' keyed by messageId
+
   const scrollToBottom = () => {
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
@@ -92,7 +96,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
   /**
    * Parses text and renders custom inline badges for wayfinding emojis.
    */
-  const renderMessageContent = (text) => {
+  const renderMessageContent = (text, msgId) => {
     if (typeof text !== 'string') return text;
 
     // 1. Check for Stadium Seating Map wayfinding Match
@@ -116,6 +120,23 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
         "pizza_324": { x: 20, y: 80, label: "🍕 Pizza Stand (Sec 324)" },
         "elevator": { x: 72, y: 68, label: "🛗 Elevator (Sec 112)" },
         "gate_c": { x: 78, y: 62, label: "🚧 Gate C Outflow" }
+      };
+
+      const currentView = mapViews[msgId] || 'seating';
+      const currentRoute = mapRoutes[msgId] || 'clear';
+
+      const toggleView = () => {
+        setMapViews(prev => ({
+          ...prev,
+          [msgId]: currentView === 'seating' ? 'suggested' : 'seating'
+        }));
+      };
+
+      const selectRoute = (route) => {
+        setMapRoutes(prev => ({
+          ...prev,
+          [msgId]: route
+        }));
       };
 
       const start = sectionCoordsMap[section.trim()] || sectionCoordsMap["112"];
@@ -159,6 +180,205 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
       const pathD = getPathData(start.x, start.y, targetCoord.x, targetCoord.y);
       const targetEmoji = targetCoord.label.split(' ')[0];
 
+      // Suggested Route External Street Map View
+      if (currentView === 'suggested') {
+        const isClear = currentRoute === 'clear';
+        return (
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 my-2.5 shadow-xl space-y-3.5 max-w-sm select-none text-slate-100 font-sans">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+              <div className="flex items-center space-x-1.5 text-stadium-gold font-bold uppercase tracking-wider text-xs">
+                <MapPin className="w-4 h-4 text-stadium-gold" />
+                <span>Suggested External Route</span>
+              </div>
+              <span className="text-[10px] text-slate-400 font-semibold truncate max-w-[130px]">{venue}</span>
+            </div>
+
+            {/* Route Options Tabs */}
+            <div className="flex gap-2 text-[10px] font-bold shrink-0">
+              <button
+                onClick={() => selectRoute('clear')}
+                className={`flex-1 p-2.5 rounded-xl border transition-all text-center cursor-pointer ${
+                  isClear
+                    ? 'border-emerald-500 bg-emerald-500/10 text-emerald-400'
+                    : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <div className="uppercase text-[8px] opacity-75">North Passage</div>
+                <div className="font-extrabold text-[11px] mt-0.5">🟢 15% Crowd (1m)</div>
+              </button>
+              <button
+                onClick={() => selectRoute('main')}
+                className={`flex-1 p-2.5 rounded-xl border transition-all text-center cursor-pointer ${
+                  !isClear
+                    ? 'border-red-500 bg-red-500/10 text-red-400'
+                    : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <div className="uppercase text-[8px] opacity-75">Main Gate</div>
+                <div className="font-extrabold text-[11px] mt-0.5">🔴 85% Crowd (3m)</div>
+              </button>
+            </div>
+
+            {/* Graphical Vector Street Map (Reference Image layout) */}
+            <div className="relative w-full h-[180px] bg-slate-950/80 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center">
+              {/* Grid Background */}
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1.5px,transparent_1.5px),linear-gradient(to_bottom,#1e293b_1.5px,transparent_1.5px)] bg-[size:15px_15px] opacity-15 pointer-events-none"></div>
+
+              {/* Vector Map Elements */}
+              <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 220">
+                {/* Parks */}
+                <rect x="180" y="0" width="100" height="25" rx="8" fill="#10b981" opacity="0.1" />
+                <rect x="220" y="160" width="160" height="60" rx="8" fill="#10b981" opacity="0.1" />
+
+                {/* River */}
+                <path d="M 0 100 Q 150 70 280 80 T 400 65" fill="none" stroke="#3b82f6" strokeWidth="4" opacity="0.18" />
+
+                {/* Yellow main highways */}
+                <path d="M 0 120 Q 100 80 200 120 T 400 10" fill="none" stroke="#f59e0b" strokeWidth="8" opacity="0.12" strokeLinecap="round" />
+                <path d="M 140 220 L 170 140 Q 190 100 230 100 L 400 100" fill="none" stroke="#f59e0b" strokeWidth="8" opacity="0.12" strokeLinecap="round" />
+
+                {/* White/Gray Streets */}
+                {/* Street A (Active North passage route road) */}
+                <path 
+                  d="M 50 220 L 50 160 Q 50 150 60 150 L 110 150 Q 120 150 120 140 L 120 90 Q 120 80 130 80 L 260 80 L 260 0" 
+                  fill="none" 
+                  stroke="#334155" 
+                  strokeWidth="14" 
+                  strokeLinecap="round" 
+                  opacity="0.45" 
+                />
+                
+                {/* Street B (Main gate road) */}
+                <path 
+                  d="M 0 160 L 300 160 Q 320 160 320 180 L 320 220" 
+                  fill="none" 
+                  stroke="#334155" 
+                  strokeWidth="14" 
+                  strokeLinecap="round" 
+                  opacity="0.45" 
+                />
+                
+                {/* Street C */}
+                <path 
+                  d="M 260 80 L 400 80" 
+                  fill="none" 
+                  stroke="#334155" 
+                  strokeWidth="14" 
+                  strokeLinecap="round" 
+                  opacity="0.45" 
+                />
+
+                {/* Google Maps Styled Active Route Line */}
+                {isClear ? (
+                  <>
+                    {/* North Passage Path */}
+                    <path 
+                      d="M 50 200 L 50 160 Q 50 150 60 150 L 110 150 Q 120 150 120 140 L 120 90 Q 120 80 130 80 L 260 80" 
+                      fill="none" 
+                      stroke="#3b82f6" 
+                      strokeWidth="5" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      opacity="0.35" 
+                    />
+                    <path 
+                      d="M 50 200 L 50 160 Q 50 150 60 150 L 110 150 Q 120 150 120 140 L 120 90 Q 120 80 130 80 L 260 80" 
+                      fill="none" 
+                      stroke="#2563eb" 
+                      strokeWidth="2.5" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                    />
+                    <path 
+                      d="M 50 200 L 50 160 Q 50 150 60 150 L 110 150 Q 120 150 120 140 L 120 90 Q 120 80 130 80 L 260 80" 
+                      fill="none" 
+                      stroke="#ffffff" 
+                      strokeWidth="1.2" 
+                      strokeDasharray="4,5" 
+                      className="route-dash-animated" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                    />
+                  </>
+                ) : (
+                  <>
+                    {/* Main Gate Path (Red - Congested) */}
+                    <path 
+                      d="M 50 200 L 50 160 Q 50 150 60 150 L 250 150 Q 260 150 260 140 L 260 80" 
+                      fill="none" 
+                      stroke="#f87171" 
+                      strokeWidth="5" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      opacity="0.35" 
+                    />
+                    <path 
+                      d="M 50 200 L 50 160 Q 50 150 60 150 L 250 150 Q 260 150 260 140 L 260 80" 
+                      fill="none" 
+                      stroke="#dc2626" 
+                      strokeWidth="2.5" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                    />
+                    <path 
+                      d="M 50 200 L 50 160 Q 50 150 60 150 L 250 150 Q 260 150 260 140 L 260 80" 
+                      fill="none" 
+                      stroke="#ffffff" 
+                      strokeWidth="1.2" 
+                      strokeDasharray="4,5" 
+                      className="route-dash-animated" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                    />
+                  </>
+                )}
+
+                {/* Pulse Blue Dot Marker (GPS Start - 50, 200) */}
+                <circle cx="50" cy="200" r="10" fill="#3b82f6" opacity="0.4" className="animate-ping" />
+                <circle cx="50" cy="200" r="6" fill="#2563eb" stroke="#ffffff" strokeWidth="2.2" />
+
+                {/* Red Teardrop Marker Pin (Goal End - 260, 80) */}
+                <g transform="translate(248, 51) scale(0.9)">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-red-500">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                  </svg>
+                  {/* Small inner target emblem */}
+                  <circle cx="12" cy="9" r="3.2" fill="#ffffff" />
+                </g>
+              </svg>
+
+              {/* Float overlays for route status description */}
+              <div className="absolute bottom-3 left-3 bg-slate-950/80 px-2 py-1 border border-slate-800 rounded-lg text-[9px] font-mono leading-none">
+                <span className="text-slate-400 uppercase text-[7px] block">Start Point</span>
+                <span className="font-bold text-slate-200">Sec {section}</span>
+              </div>
+
+              <div className="absolute top-3 right-3 bg-slate-950/80 px-2 py-1 border border-slate-800 rounded-lg text-[9px] font-mono leading-none">
+                <span className="text-slate-400 uppercase text-[7px] block">Destination</span>
+                <span className="font-bold text-slate-200">{target.toUpperCase()}</span>
+              </div>
+            </div>
+
+            {/* Back button and alternate details */}
+            <div className="flex justify-between items-center text-[10px] font-mono bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/60 leading-tight">
+              <div>
+                <span className="text-slate-400 block uppercase text-[8px] tracking-wide font-black">Status</span>
+                <span className={`font-bold ${isClear ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {isClear ? 'Fastest Route Selected' : 'Warning: High Crowd Delay'}
+                </span>
+              </div>
+              <button 
+                onClick={toggleView}
+                className="px-2 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold uppercase text-[9px] cursor-pointer shadow transition-all"
+              >
+                Back to Seats
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      // Default Seating Map View
       return (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 my-2.5 shadow-xl space-y-3.5 max-w-sm select-none text-slate-100 font-sans">
           <div className="flex justify-between items-center border-b border-slate-800 pb-2">
@@ -308,9 +528,17 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
               <span className="text-slate-400 block uppercase text-[8px] tracking-wide font-black">Target Location</span>
               <span className="font-bold text-slate-200">{targetCoord.label}</span>
             </div>
-            <div className="text-right border-l border-slate-800 pl-3">
-              <span className="font-bold text-emerald-400 block">{distance} away</span>
-              <span className="text-slate-400 text-[9px] block">~{eta} walk</span>
+            <div className="text-right border-l border-slate-800 pl-3 flex items-center space-x-2">
+              <div>
+                <span className="font-bold text-emerald-400 block">{distance} away</span>
+                <span className="text-slate-400 text-[9px] block">~{eta} walk</span>
+              </div>
+              <button 
+                onClick={toggleView}
+                className="px-2.5 py-1.5 rounded-xl bg-stadium-gold hover:bg-stadium-gold-light text-stadium-navy-deep font-black uppercase text-[9px] cursor-pointer shadow transition-all ml-2.5 shrink-0"
+              >
+                Suggest Route
+              </button>
             </div>
           </div>
         </div>
@@ -675,7 +903,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                     }`}
                   >
                     <div className="text-sm md:text-base leading-relaxed whitespace-pre-line">
-                      {renderMessageContent(msg.text)}
+                      {renderMessageContent(msg.text, msg.id)}
                     </div>
                   </div>
                 )}
