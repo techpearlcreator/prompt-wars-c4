@@ -329,18 +329,29 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
         return `M ${x1} ${y1} Q ${ctrlX} ${ctrlY} ${x2} ${y2}`;
       };
 
-      const pathD = getPathData(start.x, start.y, targetCoord.x, targetCoord.y);
-      const targetEmoji = targetCoord.label.split(' ')[0];
+      const targetsList = getTargetsForSection(section, target);
+      const selectedIndex = selectedTargets[msgId] !== undefined ? selectedTargets[msgId] : 0;
+      const activeTarget = targetsList[selectedIndex] || targetsList[0] || targetCoord;
+      const activeEmoji = activeTarget.label.split(' ')[0];
 
-      // Suggested Route External Street Map View
+      // Suggested Route Concourse View
       if (currentView === 'suggested') {
         const isClear = currentRoute === 'clear';
+        
+        // Define paths and info for suggested routes
+        const routeAPath = activeTarget.pathD;
+        const routeBPath = section === "104"
+          ? `M 125 85 L 125 155 L ${activeTarget.x} ${activeTarget.y}`
+          : `M 275 155 L 275 85 L ${activeTarget.x} ${activeTarget.y}`;
+
+        const activePath = isClear ? routeAPath : routeBPath;
+
         return (
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 my-2.5 shadow-xl space-y-3.5 max-w-sm select-none text-slate-100 font-sans">
             <div className="flex justify-between items-center border-b border-slate-800 pb-2">
               <div className="flex items-center space-x-1.5 text-stadium-gold font-bold uppercase tracking-wider text-xs">
                 <MapPin className="w-4 h-4 text-stadium-gold" />
-                <span>Suggested External Route</span>
+                <span>Suggested Real Routes</span>
               </div>
               <span className="text-[10px] text-slate-400 font-semibold truncate max-w-[130px]">{venue}</span>
             </div>
@@ -355,8 +366,8 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                     : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <div className="uppercase text-[8px] opacity-75">North Passage</div>
-                <div className="font-extrabold text-[11px] mt-0.5">🟢 15% Crowd (1m)</div>
+                <div className="uppercase text-[8px] opacity-75">Route A: Concourse Walkway</div>
+                <div className="font-extrabold text-[11px] mt-0.5">🟢 {activeTarget.capacity}% Crowd (Fast)</div>
               </button>
               <button
                 onClick={() => selectRoute('main')}
@@ -366,138 +377,95 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                     : 'border-slate-800 bg-slate-950/40 text-slate-400 hover:text-slate-200'
                 }`}
               >
-                <div className="uppercase text-[8px] opacity-75">Main Gate</div>
-                <div className="font-extrabold text-[11px] mt-0.5">🔴 85% Crowd (3m)</div>
+                <div className="uppercase text-[8px] opacity-75">Route B: Seating Shortcut</div>
+                <div className="font-extrabold text-[11px] mt-0.5">🔴 88% Crowd (3m)</div>
               </button>
             </div>
 
-            {/* Graphical Vector Street Map (Reference Image layout) */}
-            <div className="relative w-full h-[180px] bg-slate-950/80 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center">
+            {/* Graphical Vector Concourse Map */}
+            <div className="relative w-full h-[230px] bg-slate-950/90 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center">
               {/* Grid Background */}
-              <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1.5px,transparent_1.5px),linear-gradient(to_bottom,#1e293b_1.5px,transparent_1.5px)] bg-[size:15px_15px] opacity-15 pointer-events-none"></div>
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:15px_15px] opacity-10 pointer-events-none"></div>
 
-              {/* Vector Map Elements */}
-              <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 220">
-                {/* Parks */}
-                <rect x="180" y="0" width="100" height="25" rx="8" fill="#10b981" opacity="0.1" />
-                <rect x="220" y="160" width="160" height="60" rx="8" fill="#10b981" opacity="0.1" />
+              <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 240">
+                {/* Outer Stadium Ellipse wall */}
+                <ellipse cx="200" cy="120" rx="175" ry="98" fill="#0b1329" stroke="#1e293b" strokeWidth="4" />
+                <ellipse cx="200" cy="120" rx="168" ry="92" fill="none" stroke="#334155" strokeWidth="1.5" opacity="0.6" />
 
-                {/* River */}
-                <path d="M 0 100 Q 150 70 280 80 T 400 65" fill="none" stroke="#3b82f6" strokeWidth="4" opacity="0.18" />
+                {/* Concourse Walkway Corridor (Fill background) */}
+                <ellipse cx="200" cy="120" rx="146" ry="80" fill="none" stroke="#1e293b" strokeWidth="32" opacity="0.75" />
 
-                {/* Yellow main highways */}
-                <path d="M 0 120 Q 100 80 200 120 T 400 10" fill="none" stroke="#f59e0b" strokeWidth="8" opacity="0.12" strokeLinecap="round" />
-                <path d="M 140 220 L 170 140 Q 190 100 230 100 L 400 100" fill="none" stroke="#f59e0b" strokeWidth="8" opacity="0.12" strokeLinecap="round" />
+                {/* Seating Bowl Inner Wall boundary */}
+                <ellipse cx="200" cy="120" rx="130" ry="64" fill="#0f172a" stroke="#475569" strokeWidth="2.5" />
 
-                {/* White/Gray Streets */}
-                {/* Street A (Active North passage route road) */}
+                {/* Grass Field in Center */}
+                <rect x="152" y="95" width="96" height="50" rx="3" fill="#10b981" fillOpacity="0.08" stroke="#10b981" strokeWidth="1.5" opacity="0.3" />
+
+                {/* Vomitory seating access tunnels */}
+                <line x1="285" y1="162" x2="305" y2="173" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
+                <line x1="115" y1="78" x2="95" y2="67" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
+                <line x1="115" y1="162" x2="95" y2="173" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
+                <line x1="285" y1="78" x2="305" y2="67" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
+
+                {/* Dynamic path along concourse/shortcuts */}
                 <path 
-                  d="M 50 220 L 50 160 Q 50 150 60 150 L 110 150 Q 120 150 120 140 L 120 90 Q 120 80 130 80 L 260 80 L 260 0" 
+                  d={activePath} 
                   fill="none" 
-                  stroke="#334155" 
-                  strokeWidth="14" 
+                  stroke={isClear ? "#3b82f6" : "#f87171"} 
+                  strokeWidth="5" 
                   strokeLinecap="round" 
-                  opacity="0.45" 
+                  strokeLinejoin="round" 
+                  opacity="0.3" 
                 />
-                
-                {/* Street B (Main gate road) */}
                 <path 
-                  d="M 0 160 L 300 160 Q 320 160 320 180 L 320 220" 
+                  d={activePath} 
                   fill="none" 
-                  stroke="#334155" 
-                  strokeWidth="14" 
+                  stroke={isClear ? "#2563eb" : "#dc2626"} 
+                  strokeWidth="2.5" 
                   strokeLinecap="round" 
-                  opacity="0.45" 
+                  strokeLinejoin="round" 
                 />
-                
-                {/* Street C */}
                 <path 
-                  d="M 260 80 L 400 80" 
+                  d={activePath} 
                   fill="none" 
-                  stroke="#334155" 
-                  strokeWidth="14" 
+                  stroke="#ffffff" 
+                  strokeWidth="1.2" 
+                  strokeDasharray="4,5" 
+                  className="route-dash-animated" 
                   strokeLinecap="round" 
-                  opacity="0.45" 
+                  strokeLinejoin="round" 
                 />
 
-                {/* Google Maps Styled Active Route Line */}
-                {isClear ? (
-                  <>
-                    {/* North Passage Path */}
-                    <path 
-                      d="M 50 200 L 50 160 Q 50 150 60 150 L 110 150 Q 120 150 120 140 L 120 90 Q 120 80 130 80 L 260 80" 
-                      fill="none" 
-                      stroke="#3b82f6" 
-                      strokeWidth="5" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      opacity="0.35" 
-                    />
-                    <path 
-                      d="M 50 200 L 50 160 Q 50 150 60 150 L 110 150 Q 120 150 120 140 L 120 90 Q 120 80 130 80 L 260 80" 
-                      fill="none" 
-                      stroke="#2563eb" 
-                      strokeWidth="2.5" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                    />
-                    <path 
-                      d="M 50 200 L 50 160 Q 50 150 60 150 L 110 150 Q 120 150 120 140 L 120 90 Q 120 80 130 80 L 260 80" 
-                      fill="none" 
-                      stroke="#ffffff" 
-                      strokeWidth="1.2" 
-                      strokeDasharray="4,5" 
-                      className="route-dash-animated" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                    />
-                  </>
-                ) : (
-                  <>
-                    {/* Main Gate Path (Red - Congested) */}
-                    <path 
-                      d="M 50 200 L 50 160 Q 50 150 60 150 L 250 150 Q 260 150 260 140 L 260 80" 
-                      fill="none" 
-                      stroke="#f87171" 
-                      strokeWidth="5" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                      opacity="0.35" 
-                    />
-                    <path 
-                      d="M 50 200 L 50 160 Q 50 150 60 150 L 250 150 Q 260 150 260 140 L 260 80" 
-                      fill="none" 
-                      stroke="#dc2626" 
-                      strokeWidth="2.5" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                    />
-                    <path 
-                      d="M 50 200 L 50 160 Q 50 150 60 150 L 250 150 Q 260 150 260 140 L 260 80" 
-                      fill="none" 
-                      stroke="#ffffff" 
-                      strokeWidth="1.2" 
-                      strokeDasharray="4,5" 
-                      className="route-dash-animated" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
-                    />
-                  </>
-                )}
-
-                {/* Pulse Blue Dot Marker (GPS Start - 50, 200) */}
-                <circle cx="50" cy="200" r="10" fill="#3b82f6" opacity="0.4" className="animate-ping" />
-                <circle cx="50" cy="200" r="6" fill="#2563eb" stroke="#ffffff" strokeWidth="2.2" />
-
-                {/* Red Teardrop Marker Pin (Goal End - 260, 80) */}
-                <g transform="translate(248, 51) scale(0.9)">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-red-500">
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
-                  </svg>
-                  {/* Small inner target emblem */}
-                  <circle cx="12" cy="9" r="3.2" fill="#ffffff" />
-                </g>
+                {/* Pulse Blue Dot Marker (GPS Start) */}
+                <circle cx={section === "104" ? 125 : 275} cy={section === "104" ? 85 : 155} r="10" fill="#3b82f6" opacity="0.3" className="animate-ping" />
+                <circle cx={section === "104" ? 125 : 275} cy={section === "104" ? 85 : 155} r="5.5" fill="#2563eb" stroke="#ffffff" strokeWidth="2" />
               </svg>
+
+              {/* Clickable pins overlay */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div 
+                  style={{ 
+                    left: `${(activeTarget.x / 400) * 100}%`, 
+                    top: `${(activeTarget.y / 240) * 100}%`,
+                    transform: 'translate(-50%, -85%)'
+                  }} 
+                  className="absolute z-20 flex flex-col items-center scale-110"
+                >
+                  <div className="relative w-7 h-9 flex items-center justify-center shrink-0">
+                    <svg 
+                      style={{ color: isClear ? activeTarget.color : "#ef4444" }}
+                      className="absolute inset-0 w-full h-full filter drop-shadow-md" 
+                      viewBox="0 0 24 24" 
+                      fill="currentColor"
+                    >
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                    </svg>
+                    <div className="absolute top-[5px] w-[15px] h-[15px] rounded-full bg-white flex items-center justify-center text-[9px] z-10 shadow-sm">
+                      {activeEmoji}
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               {/* Float overlays for route status description */}
               <div className="absolute bottom-3 left-3 bg-slate-950/80 px-2 py-1 border border-slate-800 rounded-lg text-[9px] font-mono leading-none">
@@ -507,16 +475,16 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
 
               <div className="absolute top-3 right-3 bg-slate-950/80 px-2 py-1 border border-slate-800 rounded-lg text-[9px] font-mono leading-none">
                 <span className="text-slate-400 uppercase text-[7px] block">Destination</span>
-                <span className="font-bold text-slate-200">{target.toUpperCase()}</span>
+                <span className="font-bold text-slate-200">{activeTarget.label.split(' ')[1]}</span>
               </div>
             </div>
 
             {/* Back button and alternate details */}
             <div className="flex justify-between items-center text-[10px] font-mono bg-slate-950/40 p-2.5 rounded-xl border border-slate-800/60 leading-tight">
               <div>
-                <span className="text-slate-400 block uppercase text-[8px] tracking-wide font-black">Status</span>
+                <span className="text-slate-400 block uppercase text-[8px] tracking-wide font-black">Routing Status</span>
                 <span className={`font-bold ${isClear ? 'text-emerald-400' : 'text-red-400'}`}>
-                  {isClear ? 'Fastest Route Selected' : 'Warning: High Crowd Delay'}
+                  {isClear ? 'Recommended: Corridor Route' : 'Slow shortcut via Seating'}
                 </span>
               </div>
               <button 
@@ -531,12 +499,7 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
       }
 
       // Default Seating Map View
-      const targetsList = getTargetsForSection(section, target);
-      const selectedIndex = selectedTargets[msgId] !== undefined ? selectedTargets[msgId] : 0;
-      const activeTarget = targetsList[selectedIndex] || targetsList[0] || targetCoord;
-
       const activePathD = getPathData(start.x, start.y, activeTarget.x, activeTarget.y);
-      const activeEmoji = activeTarget.label.split(' ')[0];
 
       return (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 my-2.5 shadow-xl space-y-3.5 max-w-sm select-none text-slate-100 font-sans">
@@ -548,113 +511,94 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
             <span className="text-[10px] text-slate-400 font-semibold truncate max-w-[130px]">{venue}</span>
           </div>
 
-          {/* 3D Isometric Stadium Map Diagram */}
-          <div 
-            className="relative w-full h-[210px] bg-slate-950/70 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center"
-            style={{ perspective: '800px' }}
-          >
+          {/* Large Legible 2D Concourse Wayfinding Map */}
+          <div className="relative w-full h-[230px] bg-slate-950/90 rounded-xl border border-slate-800/80 overflow-hidden flex items-center justify-center">
             {/* Grid background lines */}
-            <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:20px_20px] opacity-15 pointer-events-none"></div>
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:15px_15px] opacity-10 pointer-events-none"></div>
 
-            {/* Isometric projected canvas */}
-            <div 
-              className="relative w-[280px] h-[160px]" 
-              style={{ transform: 'rotateX(55deg) rotateZ(-45deg)', transformStyle: 'preserve-3d' }}
-            >
-              {/* Soccer Field Grass Pitch (Layer 1 - translateZ(0px)) */}
-              <div 
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110px] h-[55px] rounded-sm border border-emerald-500/35 bg-emerald-600/15 flex items-center justify-center"
-                style={{ transform: 'translate3d(-50%, -50%, 0px)', transformStyle: 'preserve-3d' }}
-              >
-                {/* Half-line and Center circle */}
-                <div className="absolute inset-y-0 left-1/2 w-[1px] bg-emerald-500/20"></div>
-                <div className="w-8 h-8 rounded-full border border-emerald-500/20 absolute"></div>
-              </div>
-
-              {/* Lower Seating Bowl Tier 100 (Layer 2 - translateZ(12px)) */}
-              <div 
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[160px] h-[90px] rounded-full border-[3px] border-slate-700/50 bg-slate-800/20 flex items-center justify-center"
-                style={{ transform: 'translate3d(-50%, -50%, 12px)', transformStyle: 'preserve-3d' }}
-              ></div>
-
-              {/* Upper Seating Bowl Tier 200 (Layer 3 - translateZ(24px)) */}
-              <div 
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[210px] h-[115px] rounded-full border-[3px] border-stadium-gold/30 bg-slate-800/10 shadow-[0_0_15px_rgba(251,191,36,0.15)] flex items-center justify-center"
-                style={{ transform: 'translate3d(-50%, -50%, 24px)', transformStyle: 'preserve-3d' }}
-              ></div>
-
-              {/* Quadrant Section Labels projected flat on seating */}
-              <div className="absolute text-[7px] font-black text-slate-500/60 top-4 left-10" style={{ transform: 'translateZ(26px)' }}>SEC 104</div>
-              <div className="absolute text-[7px] font-black text-slate-500/60 top-4 right-10" style={{ transform: 'translateZ(26px)' }}>SEC 143</div>
-              <div className="absolute text-[7px] font-black text-slate-500/60 bottom-4 left-10" style={{ transform: 'translateZ(26px)' }}>SEC 128</div>
-              <div className="absolute text-[7px] font-black text-slate-500/60 bottom-4 right-10" style={{ transform: 'translateZ(26px)' }}>SEC 112</div>
-
-              {/* SVG Curved Path Route on projected ground (Google Maps styled line) */}
-              <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ transform: 'translateZ(25px)' }}>
-                <defs>
-                  <style>{`
-                    @keyframes routeDash {
-                      to {
-                        stroke-dashoffset: -20;
-                      }
+            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 400 240">
+              <defs>
+                <style>{`
+                  @keyframes routeDash {
+                    to {
+                      stroke-dashoffset: -20;
                     }
-                    .route-dash-animated {
-                      animation: routeDash 1.2s linear infinite;
-                    }
-                  `}</style>
-                </defs>
-                {/* Thick glow background */}
-                <path 
-                  d={activePathD} 
-                  fill="none" 
-                  stroke="#3b82f6" 
-                  strokeWidth="5" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  opacity="0.35" 
-                />
-                {/* Main solid line */}
-                <path 
-                  d={activePathD} 
-                  fill="none" 
-                  stroke="#2563eb" 
-                  strokeWidth="2.5" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                />
-                {/* Dash animation overlay */}
-                <path 
-                  d={activePathD} 
-                  fill="none" 
-                  stroke="#ffffff" 
-                  strokeWidth="1.2" 
-                  strokeDasharray="4,5" 
-                  className="route-dash-animated" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                />
-              </svg>
+                  }
+                  .route-dash-animated {
+                    animation: routeDash 1.2s linear infinite;
+                  }
+                `}</style>
+              </defs>
 
-              {/* Pulsing Google Maps Blue Dot Beacon (Upright Stand - translateZ(36px)) */}
-              <div 
-                style={{ 
-                  left: `${start.x}%`, 
-                  top: `${start.y}%`,
-                  transform: 'translate3d(-50%, -50%, 36px) rotateZ(45deg) rotateX(-55deg)',
-                  transformStyle: 'preserve-3d'
-                }} 
-                className="absolute z-10 flex flex-col items-center"
-              >
-                <div className="relative flex h-5 w-5 items-center justify-center">
-                  <span className="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-blue-500/40"></span>
-                  <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-600 border-2 border-white shadow-lg"></span>
-                </div>
-                <span className="mt-1 px-1.5 py-0.5 bg-blue-600/95 text-white text-[6.5px] font-black rounded uppercase select-none pointer-events-none tracking-wider shadow">
-                  Your Seat
-                </span>
-              </div>
+              {/* Outer Stadium Ellipse wall */}
+              <ellipse cx="200" cy="120" rx="175" ry="98" fill="#0b1329" stroke="#1e293b" strokeWidth="4" />
+              <ellipse cx="200" cy="120" rx="168" ry="92" fill="none" stroke="#334155" strokeWidth="1.5" opacity="0.6" />
 
-              {/* Destination Red/Orange/Yellow/Green Teardrop Map Pins (Upright Stand - translateZ(36px)) */}
+              {/* Concourse Walkway Corridor (Fill background) */}
+              <ellipse cx="200" cy="120" rx="146" ry="80" fill="none" stroke="#1e293b" strokeWidth="32" opacity="0.75" />
+
+              {/* Seating Bowl Inner Wall boundary */}
+              <ellipse cx="200" cy="120" rx="130" ry="64" fill="#0f172a" stroke="#475569" strokeWidth="2.5" />
+
+              {/* Grass Field in Center */}
+              <rect x="152" y="95" width="96" height="50" rx="3" fill="#10b981" fillOpacity="0.08" stroke="#10b981" strokeWidth="1.5" opacity="0.3" />
+              <line x1="200" y1="95" x2="200" y2="145" stroke="#10b981" strokeWidth="1" opacity="0.2" />
+              <circle cx="200" cy="120" r="16" fill="none" stroke="#10b981" strokeWidth="1" opacity="0.2" />
+
+              {/* Vomitory seating access tunnels */}
+              <line x1="285" y1="162" x2="305" y2="173" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
+              <line x1="115" y1="78" x2="95" y2="67" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
+              <line x1="115" y1="162" x2="95" y2="173" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
+              <line x1="285" y1="78" x2="305" y2="67" stroke="#334155" strokeWidth="6" strokeLinecap="round" />
+
+              {/* Seating Section Labels (Static text in seating area) */}
+              <text x="125" y="86" fill="#475569" fontSize="7" fontWeight="bold" textAnchor="middle">SEC 104</text>
+              <text x="275" y="86" fill="#475569" fontSize="7" fontWeight="bold" textAnchor="middle">SEC 143</text>
+              <text x="125" y="162" fill="#475569" fontSize="7" fontWeight="bold" textAnchor="middle">SEC 128</text>
+              <text x="275" y="162" fill="#475569" fontSize="7" fontWeight="bold" textAnchor="middle">SEC 112</text>
+
+              {/* Dynamic walking route path along concourse */}
+              <path 
+                d={activeTarget.pathD || activePathD} 
+                fill="none" 
+                stroke="#3b82f6" 
+                strokeWidth="5" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                opacity="0.3" 
+              />
+              <path 
+                d={activeTarget.pathD || activePathD} 
+                fill="none" 
+                stroke="#2563eb" 
+                strokeWidth="2.5" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+              />
+              <path 
+                d={activeTarget.pathD || activePathD} 
+                fill="none" 
+                stroke="#ffffff" 
+                strokeWidth="1.2" 
+                strokeDasharray="4,5" 
+                className="route-dash-animated" 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+              />
+
+              {/* Start seat position dot */}
+              <circle cx={section === "104" ? 125 : 275} cy={section === "104" ? 85 : 155} r="10" fill="#3b82f6" opacity="0.3" className="animate-ping" />
+              <circle cx={section === "104" ? 125 : 275} cy={section === "104" ? 85 : 155} r="5.5" fill="#2563eb" stroke="#ffffff" strokeWidth="2" />
+            </svg>
+
+            {/* Float Label overlays for Start / End */}
+            <div className="absolute bottom-3 left-3 bg-slate-950/80 px-2 py-1 border border-slate-800 rounded-lg text-[9px] font-mono leading-none">
+              <span className="text-slate-400 uppercase text-[7px] block">Your Seat</span>
+              <span className="font-bold text-slate-200">Sec {section}</span>
+            </div>
+
+            {/* Clickable pins overlay */}
+            <div className="absolute inset-0 pointer-events-none">
               {targetsList.map((tg, idx) => {
                 const isCurrentActive = idx === selectedIndex;
                 const emoji = tg.label.split(' ')[0];
@@ -668,37 +612,36 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                       }));
                     }}
                     style={{ 
-                      left: `${tg.x}%`, 
-                      top: `${tg.y}%`,
-                      transform: `translate3d(-50%, -85%, 36px) rotateZ(45deg) rotateX(-55deg) scale(${isCurrentActive ? 1.15 : 0.95})`,
-                      transformStyle: 'preserve-3d',
-                      transition: 'transform 0.25s ease-out'
+                      left: `${(tg.x / 400) * 100}%`, 
+                      top: `${(tg.y / 240) * 100}%`,
+                      transform: 'translate(-50%, -85%)',
+                      transition: 'transform 0.2s ease-out'
                     }} 
-                    className="absolute z-20 flex flex-col items-center cursor-pointer pointer-events-auto group outline-none"
+                    className={`absolute z-20 flex flex-col items-center cursor-pointer pointer-events-auto group outline-none ${isCurrentActive ? 'scale-110' : 'scale-90'}`}
                     title={`${tg.label} (${tg.capacity}% crowd)`}
                   >
-                    <div className="relative w-8 h-10 flex items-center justify-center">
-                      {/* Teardrop pin wrapper colored dynamically based on crowd level */}
+                    <div className="relative w-7 h-9 flex items-center justify-center shrink-0">
+                      {/* Teardrop Pin colored dynamically based on crowd level */}
                       <svg 
                         style={{ color: tg.color }}
-                        className={`absolute inset-0 w-full h-full filter drop-shadow-md transition-all duration-300 ${isCurrentActive ? 'opacity-100 scale-110' : 'opacity-85 group-hover:opacity-100 group-hover:scale-105'}`} 
+                        className={`absolute inset-0 w-full h-full filter drop-shadow-md transition-all duration-300 ${isCurrentActive ? 'opacity-100' : 'opacity-75 group-hover:opacity-100'}`} 
                         viewBox="0 0 24 24" 
                         fill="currentColor"
                       >
                         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
                       </svg>
-                      {/* White center holding the target emoji */}
-                      <div className="absolute top-[6.5px] w-[18px] h-[18px] rounded-full bg-white flex items-center justify-center text-[10px] z-10 shadow-sm">
+                      {/* White center holding target emoji */}
+                      <div className="absolute top-[5px] w-[15px] h-[15px] rounded-full bg-white flex items-center justify-center text-[9px] z-10 shadow-sm">
                         {emoji}
                       </div>
                       
                       {/* Crowd capacity bubble overlay */}
-                      <div className="absolute -top-3.5 px-1 rounded bg-slate-950 border border-slate-700 text-[6.5px] font-black text-slate-200 shadow-sm leading-tight whitespace-nowrap">
+                      <div className="absolute -top-3.5 px-1 rounded bg-slate-950 border border-slate-700 text-[6px] font-black text-slate-200 shadow-sm leading-tight whitespace-nowrap">
                         {tg.capacity}%
                       </div>
                     </div>
                     {isCurrentActive && (
-                      <span className="mt-0.5 px-1.5 py-0.5 bg-slate-900/90 text-stadium-gold border border-stadium-gold/30 text-[5.5px] font-black rounded uppercase tracking-widest whitespace-nowrap select-none pointer-events-none shadow-md">
+                      <span className="mt-0.5 px-1.5 py-0.5 bg-slate-900/90 text-stadium-gold border border-stadium-gold/30 text-[5px] font-black rounded uppercase tracking-widest whitespace-nowrap select-none pointer-events-none shadow-md">
                         Selected
                       </span>
                     )}
