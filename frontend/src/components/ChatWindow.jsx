@@ -179,7 +179,7 @@ export default function ChatWindow({ matchId, language, t, socket }) {
     <section 
       id="chat-window"
       aria-label="FIFA Chat Assistant" 
-      className="flex flex-col h-full bg-stadium-navy-card rounded-3xl border border-stadium-navy-light/60 overflow-hidden shadow-2xl animate-fade-in relative"
+      className="flex flex-col h-full bg-stadium-navy-card rounded-3xl border border-stadium-navy-light/60 overflow-hidden shadow-2xl animate-fade-in relative min-h-0"
     >
       {/* SOS Report Dialog Overlay Modal */}
       {showSosModal && (

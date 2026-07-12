@@ -61,11 +61,23 @@
           "text": "Here is the interactive seating map and wayfinding route from Section 112 to the nearest restroom:\n[STADIUM_MAP: MetLife Stadium, section: 112, target: restroom, eta: 1 min, distance: 25m]",
           "sender": "ai",
           "timestamp": 1783786331892
+        },
+        {
+          "id": "msg_1783820330938_nxfi6",
+          "text": "Show me the map for Section 112 restrooms",
+          "sender": "user",
+          "timestamp": 1783820330938
+        },
+        {
+          "id": "msg_1783820330952_6715n",
+          "text": "Here is the interactive seating map and wayfinding route from Section 112 to the nearest restroom:\n[STADIUM_MAP: MetLife Stadium, section: 112, target: restroom, eta: 1 min, distance: 25m]",
+          "sender": "ai",
+          "timestamp": 1783820330952
         }
       ],
       "createdAt": 1783767473247,
       "matchId": "fifa_2026_001",
-      "lastActivity": 1783786331892
+      "lastActivity": 1783820330952
     },
     "usr_1783767425736_dtx06i1zz": {
       "messages": [

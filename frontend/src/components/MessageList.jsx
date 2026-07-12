@@ -136,6 +136,29 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
         targetCoord = targetCoordsMap["gate_c"];
       }
 
+      // Generate curved pathway around center field (Google Maps corridor pathing)
+      const getPathData = (x1, y1, x2, y2) => {
+        const cx = 50;
+        const cy = 50;
+        const mx = (x1 + x2) / 2;
+        const my = (y1 + y2) / 2;
+        const distToCenter = Math.sqrt(Math.pow(mx - cx, 2) + Math.pow(my - cy, 2));
+
+        let ctrlX = mx;
+        let ctrlY = my;
+        if (distToCenter < 28) {
+          const dx = mx - cx;
+          const dy = my - cy;
+          const len = Math.sqrt(dx * dx + dy * dy) || 1;
+          ctrlX = cx + (dx / len) * 40;
+          ctrlY = cy + (dy / len) * 34;
+        }
+        return `M ${x1} ${y1} Q ${ctrlX} ${ctrlY} ${x2} ${y2}`;
+      };
+
+      const pathD = getPathData(start.x, start.y, targetCoord.x, targetCoord.y);
+      const targetEmoji = targetCoord.label.split(' ')[0];
+
       return (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 my-2.5 shadow-xl space-y-3.5 max-w-sm select-none text-slate-100 font-sans">
           <div className="flex justify-between items-center border-b border-slate-800 pb-2">
@@ -187,33 +210,53 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
               <div className="absolute text-[7px] font-black text-slate-500/60 bottom-4 left-10" style={{ transform: 'translateZ(26px)' }}>SEC 128</div>
               <div className="absolute text-[7px] font-black text-slate-500/60 bottom-4 right-10" style={{ transform: 'translateZ(26px)' }}>SEC 112</div>
 
-              {/* SVG Path Route on projected ground */}
+              {/* SVG Curved Path Route on projected ground (Google Maps styled line) */}
               <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ transform: 'translateZ(25px)' }}>
                 <defs>
                   <style>{`
-                    @keyframes dash {
+                    @keyframes routeDash {
                       to {
                         stroke-dashoffset: -20;
                       }
                     }
-                    .route-line-3d {
-                      stroke: #fbbf24;
-                      stroke-width: 2.5;
-                      stroke-dasharray: 6,4;
-                      animation: dash 1s linear infinite;
+                    .route-dash-animated {
+                      animation: routeDash 1.2s linear infinite;
                     }
                   `}</style>
                 </defs>
-                <line 
-                  x1={`${start.x}%`} 
-                  y1={`${start.y}%`} 
-                  x2={`${targetCoord.x}%`} 
-                  y2={`${targetCoord.y}%`} 
-                  className="route-line-3d" 
+                {/* Thick glow background */}
+                <path 
+                  d={pathD} 
+                  fill="none" 
+                  stroke="#3b82f6" 
+                  strokeWidth="5" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  opacity="0.35" 
+                />
+                {/* Main solid line */}
+                <path 
+                  d={pathD} 
+                  fill="none" 
+                  stroke="#2563eb" 
+                  strokeWidth="2.5" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                />
+                {/* Dash animation overlay */}
+                <path 
+                  d={pathD} 
+                  fill="none" 
+                  stroke="#ffffff" 
+                  strokeWidth="1.2" 
+                  strokeDasharray="4,5" 
+                  className="route-dash-animated" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
                 />
               </svg>
 
-              {/* Blinking Seat Marker Radar Beacon (Upright Stand - translateZ(36px)) */}
+              {/* Pulsing Google Maps Blue Dot Beacon (Upright Stand - translateZ(36px)) */}
               <div 
                 style={{ 
                   left: `${start.x}%`, 
@@ -221,32 +264,39 @@ export default function MessageList({ messages, isTyping, ratingThanksText, matc
                   transform: 'translate3d(-50%, -50%, 36px) rotateZ(45deg) rotateX(-55deg)',
                   transformStyle: 'preserve-3d'
                 }} 
-                className="absolute z-10"
+                className="absolute z-10 flex flex-col items-center"
               >
-                <div className="relative flex h-3.5 w-3.5 items-center justify-center">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-80"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500 border border-white shadow-sm"></span>
+                <div className="relative flex h-5 w-5 items-center justify-center">
+                  <span className="animate-ping absolute inline-flex h-8 w-8 rounded-full bg-blue-500/40"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-600 border-2 border-white shadow-lg"></span>
                 </div>
-                <span className="absolute left-4 -top-1 px-1 bg-amber-500/90 text-slate-950 text-[7px] font-black rounded uppercase select-none pointer-events-none tracking-wider shadow">
-                  SEAT
+                <span className="mt-1 px-1.5 py-0.5 bg-blue-600/95 text-white text-[6.5px] font-black rounded uppercase select-none pointer-events-none tracking-wider shadow">
+                  Your Seat
                 </span>
               </div>
 
-              {/* Destination Target Marker (Upright Stand - translateZ(36px)) */}
+              {/* Destination Red Teardrop Map Pin (Upright Stand - translateZ(36px)) */}
               <div 
                 style={{ 
                   left: `${targetCoord.x}%`, 
                   top: `${targetCoord.y}%`,
-                  transform: 'translate3d(-50%, -50%, 36px) rotateZ(45deg) rotateX(-55deg)',
+                  transform: 'translate3d(-50%, -85%, 36px) rotateZ(45deg) rotateX(-55deg)',
                   transformStyle: 'preserve-3d'
                 }} 
-                className="absolute z-10"
+                className="absolute z-10 flex flex-col items-center"
               >
-                <div className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-500 text-slate-950 font-black border-2 border-slate-900 shadow-md">
-                  <span className="text-[9px]">{targetCoord.label.split(' ')[0]}</span>
+                <div className="relative w-8 h-10 flex items-center justify-center">
+                  {/* Google Red Teardrop pin */}
+                  <svg className="absolute inset-0 w-full h-full text-red-500 filter drop-shadow-md" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                  </svg>
+                  {/* White circle inside holding the target emoji asset */}
+                  <div className="absolute top-[6px] w-[18px] h-[18px] rounded-full bg-white flex items-center justify-center text-[10px] z-10 shadow-sm">
+                    {targetEmoji}
+                  </div>
                 </div>
-                <span className="absolute left-6.5 -top-1 px-1.5 py-0.5 bg-emerald-500/90 text-slate-950 text-[7px] font-black rounded uppercase tracking-wider whitespace-nowrap select-none pointer-events-none shadow">
-                  GOAL
+                <span className="mt-0.5 px-1.5 py-0.5 bg-red-600/95 text-white text-[6.5px] font-black rounded uppercase tracking-wider whitespace-nowrap select-none pointer-events-none shadow">
+                  Goal
                 </span>
               </div>
             </div>

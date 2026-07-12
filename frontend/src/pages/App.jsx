@@ -240,7 +240,7 @@ export default function App() {
   return (
     <main 
       id="app-main-layout"
-      className="flex flex-col h-screen bg-stadium-navy-deep text-slate-100 font-sans overflow-hidden relative"
+      className="flex flex-col h-screen h-[100dvh] max-h-screen bg-stadium-navy-deep text-slate-100 font-sans overflow-hidden relative"
     >
       {/* Premium ambient glow */}
       <div className="absolute top-[-20%] left-[20%] w-[500px] h-[500px] rounded-full bg-stadium-gold/5 blur-[120px] pointer-events-none"></div>
@@ -270,30 +270,41 @@ export default function App() {
       )}
 
       {/* Navigation Header */}
-      <header className="flex flex-col sm:flex-row items-center justify-between px-6 py-4 border-b border-stadium-navy-light/40 bg-stadium-navy-deep/80 backdrop-blur-md z-10 shrink-0 gap-3">
-        <div className="flex items-center space-x-3 w-full sm:w-auto">
-          {/* Hamburger menu button for mobile screens */}
-          <button
-            onClick={() => setIsSidebarOpen(true)}
-            className="p-2 rounded-xl bg-stadium-navy-light hover:bg-stadium-navy-accent text-slate-300 hover:text-stadium-gold cursor-pointer transition-colors lg:hidden shrink-0"
-            aria-label="Toggle Menu"
-          >
-            <Menu className="w-5 h-5" />
-          </button>
+      <header className="flex items-center justify-between px-4 lg:px-6 py-3.5 border-b border-stadium-navy-light/40 bg-stadium-navy-deep/80 backdrop-blur-md z-10 shrink-0 gap-3">
+        <div className="flex items-center justify-between w-full lg:w-auto lg:space-x-3">
+          <div className="flex items-center space-x-3">
+            {/* Hamburger menu button for mobile screens */}
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-2 rounded-xl bg-stadium-navy-light hover:bg-stadium-navy-accent text-slate-300 hover:text-stadium-gold cursor-pointer transition-colors lg:hidden shrink-0"
+              aria-label="Toggle Menu"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
 
-          <div className="w-9 h-9 rounded-lg bg-stadium-gold flex items-center justify-center shadow-lg">
-            <Trophy className="w-5 h-5 text-stadium-navy-deep" />
+            <div className="w-9 h-9 rounded-lg bg-stadium-gold flex items-center justify-center shadow-lg">
+              <Trophy className="w-5 h-5 text-stadium-navy-deep" />
+            </div>
+            <div>
+              <h1 className="text-sm sm:text-base font-extrabold tracking-wide uppercase text-slate-100 flex items-center">
+                FIFA WORLD CUP <span className="text-stadium-gold ml-1.5">2026</span>
+              </h1>
+              <p className="text-[10px] text-slate-400 font-medium tracking-widest uppercase">{t.subtitle}</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-sm sm:text-base font-extrabold tracking-wide uppercase text-slate-100 flex items-center">
-              FIFA WORLD CUP <span className="text-stadium-gold ml-1.5">2026</span>
-            </h1>
-            <p className="text-[10px] text-slate-400 font-medium tracking-widest uppercase">{t.subtitle}</p>
-          </div>
+
+          {/* Mobile dashboard trigger */}
+          <button
+            onClick={() => setShowDashboard(true)}
+            className="lg:hidden flex items-center justify-center bg-stadium-gold hover:bg-stadium-gold-light text-stadium-navy-deep p-2 rounded-xl transition-all cursor-pointer shadow-md select-none shrink-0"
+            aria-label="Dashboard"
+          >
+            <BarChart2 className="w-4 h-4" />
+          </button>
         </div>
         
-        {/* Controls: Match, Language, Dashboard */}
-        <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto justify-start sm:justify-end">
+        {/* Controls (Desktop Only) */}
+        <div className="hidden lg:flex items-center gap-3">
           {/* Match Dropdown */}
           <div className="flex items-center space-x-1.5 bg-stadium-navy-card border border-stadium-navy-light px-2.5 py-1.5 rounded-xl text-xs text-slate-300">
             <Calendar className="w-3.5 h-3.5 text-stadium-gold" />
@@ -337,7 +348,7 @@ export default function App() {
       </header>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex overflow-hidden p-4 gap-4 z-10 relative">
+      <div className="flex-1 flex overflow-hidden p-4 gap-4 z-10 relative min-h-0">
         
         {/* Slide-out overlay backdrop for mobile screens */}
         {isSidebarOpen && (
@@ -371,6 +382,38 @@ export default function App() {
             >
               <X className="w-4 h-4" />
             </button>
+          </div>
+
+          {/* Mobile settings controls (Phase 18 Refinement) */}
+          <div className="lg:hidden flex flex-col gap-2.5 border-b border-stadium-navy-light/30 pb-4 shrink-0">
+            <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">Quick Settings</span>
+            <div className="flex gap-2">
+              <div className="flex-1 flex items-center space-x-1.5 bg-stadium-navy-deep border border-stadium-navy-light px-2.5 py-2 rounded-xl text-xs">
+                <Calendar className="w-3.5 h-3.5 text-stadium-gold shrink-0" />
+                <select 
+                  value={matchId} 
+                  onChange={(e) => setMatchId(e.target.value)}
+                  className="bg-transparent border-none outline-none text-slate-200 cursor-pointer font-medium w-full text-[11px]"
+                >
+                  <option value="fifa_2026_001" className="bg-stadium-navy-card">ARG vs AUS</option>
+                  <option value="fifa_2026_002" className="bg-stadium-navy-card">FRA vs MAR</option>
+                </select>
+              </div>
+              <div className="flex-1 flex items-center space-x-1.5 bg-stadium-navy-deep border border-stadium-navy-light px-2.5 py-2 rounded-xl text-xs">
+                <Globe className="w-3.5 h-3.5 text-stadium-gold shrink-0" />
+                <select 
+                  value={language} 
+                  onChange={(e) => setLanguage(e.target.value)}
+                  className="bg-transparent border-none outline-none text-slate-200 cursor-pointer font-medium w-full text-[11px]"
+                >
+                  <option value="English" className="bg-stadium-navy-card">English</option>
+                  <option value="Spanish" className="bg-stadium-navy-card">Español</option>
+                  <option value="Hindi" className="bg-stadium-navy-card">हिन्दी</option>
+                  <option value="Arabic" className="bg-stadium-navy-card">العربية</option>
+                  <option value="Mandarin" className="bg-stadium-navy-card">简体中文</option>
+                </select>
+              </div>
+            </div>
           </div>
 
           {/* Match Score Card */}
@@ -738,7 +781,7 @@ export default function App() {
         </section>
 
         {/* Chat window space */}
-        <div className="flex-1 h-full overflow-hidden">
+        <div className="flex-1 h-full overflow-hidden min-h-0">
           <ChatWindow 
             matchId={matchId} 
             language={language} 
